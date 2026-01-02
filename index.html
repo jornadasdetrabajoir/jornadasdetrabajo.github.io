@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
+        /* [MANTENER TODO EL CSS IGUAL] */
         :root {
             --primary: #2c3e50;
             --secondary: #3498db;
@@ -1127,6 +1128,7 @@
         // Estado de la aplicación
         let selectedEmployee = null;
         let employees = [];
+        let todayRecords = []; // Nuevo: almacena registros del día en memoria
         let holidays = [
             "2026-01-01", "2026-01-06", "2026-04-14", "2026-04-15", 
             "2026-05-01", "2026-08-15", "2026-10-12", "2026-11-01", 
@@ -1407,7 +1409,7 @@
             return holidays.includes(dateString);
         }
 
-        // FUNCIONES DE FICHAJE CORREGIDAS
+        // FUNCIONES DE FICHAJE CORREGIDAS - SIN CONDICIÓN DE CARRERA
         async function punchEntry() {
             if (!selectedEmployee) {
                 alert('❌ Seleccione un empleado primero');
@@ -1419,34 +1421,13 @@
             
             try {
                 const today = formatDate(now);
-                const todayRecords = await getRecordsByEmployee(selectedEmployee, today, today);
                 
-                // Verificar si ya hay una entrada sin salida hoy
-                const entries = todayRecords.filter(r => r.type === 'entry');
-                const exits = todayRecords.filter(r => r.type === 'exit');
+                // 1. DESHABILITAR ENTRADA Y HABILITAR SALIDA INMEDIATAMENTE
+                document.getElementById('punchEntry').disabled = true;
+                document.getElementById('punchExit').disabled = false;
                 
-                let hasOpenEntry = false;
-                if (entries.length > 0) {
-                    // Ordenar entradas por timestamp
-                    const sortedEntries = [...entries].sort((a, b) => 
-                        (b.timestamp || 0) - (a.timestamp || 0)
-                    );
-                    const lastEntry = sortedEntries[0];
-                    
-                    // Verificar si hay una salida después de esta entrada
-                    const hasExitAfter = exits.some(exit => 
-                        (exit.timestamp || 0) > (lastEntry.timestamp || 0)
-                    );
-                    
-                    hasOpenEntry = !hasExitAfter;
-                }
-                
-                if (hasOpenEntry) {
-                    alert('⚠️ Ya tiene una entrada registrada hoy sin salida. Debe fichar salida primero.');
-                    return;
-                }
-                
-                await addRecord({
+                // 2. AGREGAR REGISTRO LOCALMENTE
+                const localRecord = {
                     employeeId: selectedEmployee,
                     employeeName: employee.name,
                     date: today,
@@ -1455,18 +1436,36 @@
                     description: 'Entrada normal',
                     hours: 0,
                     timestamp: now.getTime(),
+                    localId: 'local_' + Date.now() // ID temporal
+                };
+                
+                // Agregar a todayRecords
+                todayRecords.push(localRecord);
+                todayRecords.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // 3. ACTUALIZAR UI INMEDIATAMENTE (sin consultar Firestore)
+                updateCurrentEmployeeDisplay();
+                updateRecentRecordsFromLocal();
+                
+                // 4. GUARDAR EN FIRESTORE (en segundo plano)
+                await addRecord({
+                    ...localRecord,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Actualizar UI inmediatamente
-                document.getElementById('punchEntry').disabled = true;
-                document.getElementById('punchExit').disabled = false;
+                // 5. ACTUALIZAR RESUMEN DESPUÉS DE UN BREVE RETRASO
+                setTimeout(async () => {
+                    await updateHoursSummary();
+                    await updateRecentRecords();
+                }, 1000);
                 
-                await updateUI();
                 alert('✅ Entrada registrada a las ' + formatTime(now));
             } catch (error) {
                 console.error("Error registrando entrada:", error);
                 alert('❌ Error al registrar entrada: ' + error.message);
+                // Revertir estado de botones en caso de error
+                document.getElementById('punchEntry').disabled = false;
+                document.getElementById('punchExit').disabled = true;
             }
         }
 
@@ -1481,47 +1480,28 @@
             
             try {
                 const today = formatDate(now);
-                const todayRecords = await getRecordsByEmployee(selectedEmployee, today, today);
                 
-                // Buscar la última entrada del día sin salida
-                const entries = todayRecords.filter(r => r.type === 'entry');
-                const exits = todayRecords.filter(r => r.type === 'exit');
+                // 1. Buscar la última entrada del día
+                const lastEntry = todayRecords
+                    .filter(r => r.type === 'entry')
+                    .sort((a, b) => b.timestamp - a.timestamp)[0];
                 
-                if (entries.length === 0) {
-                    alert('❌ No hay una entrada registrada para hoy. Debe fichar entrada primero.');
+                if (!lastEntry) {
+                    alert('❌ No hay una entrada registrada para hoy.');
                     return;
                 }
                 
-                // Ordenar entradas por timestamp
-                const sortedEntries = [...entries].sort((a, b) => 
-                    (b.timestamp || 0) - (a.timestamp || 0)
-                );
-                
-                // Encontrar la última entrada que no tenga salida posterior
-                let lastEntryWithoutExit = null;
-                for (const entry of sortedEntries) {
-                    const hasExitAfter = exits.some(exit => 
-                        (exit.timestamp || 0) > (entry.timestamp || 0)
-                    );
-                    
-                    if (!hasExitAfter) {
-                        lastEntryWithoutExit = entry;
-                        break;
-                    }
-                }
-                
-                if (!lastEntryWithoutExit) {
-                    alert('⚠️ Todas las entradas de hoy ya tienen salida registrada.');
-                    return;
-                }
-                
-                // Calcular horas trabajadas
-                const entryTime = new Date(lastEntryWithoutExit.timestamp || 
-                                         new Date(lastEntryWithoutExit.date + 'T' + lastEntryWithoutExit.time));
+                // 2. Calcular horas trabajadas
+                const entryTime = new Date(lastEntry.timestamp);
                 const exitTime = now;
                 const hoursWorked = Math.max(0, (exitTime - entryTime) / (1000 * 60 * 60));
                 
-                await addRecord({
+                // 3. DESHABILITAR SALIDA Y HABILITAR ENTRADA INMEDIATAMENTE
+                document.getElementById('punchEntry').disabled = false;
+                document.getElementById('punchExit').disabled = true;
+                
+                // 4. AGREGAR REGISTRO LOCALMENTE
+                const localRecord = {
                     employeeId: selectedEmployee,
                     employeeName: employee.name,
                     date: today,
@@ -1530,19 +1510,118 @@
                     description: 'Salida normal',
                     hours: hoursWorked,
                     timestamp: now.getTime(),
+                    localId: 'local_' + Date.now()
+                };
+                
+                // Agregar a todayRecords
+                todayRecords.push(localRecord);
+                todayRecords.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // 5. ACTUALIZAR UI INMEDIATAMENTE
+                updateCurrentEmployeeDisplay();
+                updateRecentRecordsFromLocal();
+                
+                // 6. GUARDAR EN FIRESTORE
+                await addRecord({
+                    ...localRecord,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Actualizar UI inmediatamente
-                document.getElementById('punchEntry').disabled = false;
-                document.getElementById('punchExit').disabled = true;
+                // 7. ACTUALIZAR RESUMEN DESPUÉS DE UN BREVE RETRASO
+                setTimeout(async () => {
+                    await updateHoursSummary();
+                    await updateRecentRecords();
+                }, 1000);
                 
-                await updateUI();
                 alert(`✅ Salida registrada.\n⏱️ Horas trabajadas: ${hoursWorked.toFixed(2)}h`);
             } catch (error) {
                 console.error("Error registrando salida:", error);
                 alert('❌ Error al registrar salida: ' + error.message);
+                // Revertir estado de botones en caso de error
+                document.getElementById('punchEntry').disabled = true;
+                document.getElementById('punchExit').disabled = false;
             }
+        }
+
+        // Función para actualizar registros recientes desde datos locales
+        function updateRecentRecordsFromLocal() {
+            const tbody = document.getElementById('recentRecordsBody');
+            tbody.innerHTML = '';
+            
+            if (!selectedEmployee) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="text-align: center; padding: 30px; color: var(--gray);">
+                    <i class="fas fa-user"></i> Seleccione un empleado
+                </td>`;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            // Filtrar registros locales del empleado seleccionado
+            const employeeRecords = todayRecords.filter(r => r.employeeId === selectedEmployee);
+            const recentRecords = employeeRecords.slice(0, 10);
+            
+            if (recentRecords.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="text-align: center; padding: 30px; color: var(--gray);">
+                    <i class="fas fa-inbox"></i> No hay registros
+                </td>`;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            recentRecords.forEach(record => {
+                const row = document.createElement('tr');
+                
+                // Formatear fecha
+                let formattedDate = record.date;
+                try {
+                    if (record.date) {
+                        const dateObj = new Date(record.date);
+                        formattedDate = dateObj.toLocaleDateString('es-ES', {
+                            day: '2-digit', month: '2-digit', year: 'numeric'
+                        });
+                    }
+                } catch (e) {}
+                
+                // Determinar tipo y color
+                let typeClass = '', typeText = '', icon = '';
+                switch(record.type) {
+                    case 'entry': 
+                        typeClass = 'type-entry'; 
+                        typeText = 'Entrada';
+                        icon = '<i class="fas fa-sign-in-alt"></i>';
+                        break;
+                    case 'exit': 
+                        typeClass = 'type-exit'; 
+                        typeText = 'Salida';
+                        icon = '<i class="fas fa-sign-out-alt"></i>';
+                        break;
+                    case 'vacation': 
+                        typeClass = 'type-vacation'; 
+                        typeText = 'Vacaciones';
+                        icon = '<i class="fas fa-umbrella-beach"></i>';
+                        break;
+                    case 'sick': 
+                        typeClass = 'type-sick'; 
+                        typeText = 'Baja';
+                        icon = '<i class="fas fa-heartbeat"></i>';
+                        break;
+                    case 'travel': 
+                        typeClass = 'type-travel'; 
+                        typeText = 'Viaje';
+                        icon = '<i class="fas fa-plane"></i>';
+                        break;
+                }
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${record.time || '--:--'}</td>
+                    <td><span class="record-type ${typeClass}">${icon} ${typeText}</span></td>
+                    <td>${record.description || ''} ${record.hours > 0 ? `(${record.hours.toFixed(2)}h)` : ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         async function markAsVacation() {
@@ -1766,7 +1845,6 @@
                     records.push({ 
                         id: doc.id, 
                         ...data,
-                        // Asegurar que timestamp esté disponible
                         timestamp: data.timestamp || Date.now()
                     });
                 });
@@ -1909,60 +1987,11 @@
         async function updateUI() {
             console.log("Actualizando UI...");
             updateCurrentEmployeeDisplay();
-            await updatePunchButtons();
             await updateHoursSummary();
             await updateRecentRecords();
             
             if (document.getElementById('adminPanel').style.display !== 'none') {
                 await updateAdminPanel();
-            }
-        }
-
-        async function updatePunchButtons() {
-            console.log("Actualizando botones de fichaje...");
-            
-            if (!selectedEmployee) {
-                document.getElementById('punchEntry').disabled = false;
-                document.getElementById('punchExit').disabled = true;
-                return;
-            }
-            
-            try {
-                const today = formatDate(new Date());
-                const todayRecords = await getRecordsByEmployee(selectedEmployee, today, today);
-                
-                // Verificar estado actual
-                const entries = todayRecords.filter(r => r.type === 'entry');
-                const exits = todayRecords.filter(r => r.type === 'exit');
-                
-                // Determinar si hay una entrada sin salida
-                let hasOpenEntry = false;
-                if (entries.length > 0) {
-                    // Ordenar entradas por timestamp
-                    const sortedEntries = [...entries].sort((a, b) => 
-                        (b.timestamp || 0) - (a.timestamp || 0)
-                    );
-                    const lastEntry = sortedEntries[0];
-                    
-                    // Verificar si hay una salida después de esta entrada
-                    const hasExitAfter = exits.some(exit => 
-                        (exit.timestamp || 0) > (lastEntry.timestamp || 0)
-                    );
-                    
-                    hasOpenEntry = !hasExitAfter;
-                }
-                
-                // Actualizar estado de botones
-                document.getElementById('punchEntry').disabled = hasOpenEntry;
-                document.getElementById('punchExit').disabled = !hasOpenEntry;
-                
-                console.log(`Estado botones: Entrada ${hasOpenEntry ? 'BLOQUEADA' : 'HABILITADA'}, Salida ${!hasOpenEntry ? 'BLOQUEADA' : 'HABILITADA'}`);
-                
-            } catch (error) {
-                console.error("Error actualizando botones:", error);
-                // En caso de error, estado por defecto
-                document.getElementById('punchEntry').disabled = false;
-                document.getElementById('punchExit').disabled = true;
             }
         }
 
@@ -1983,8 +2012,40 @@
                 const year = now.getFullYear();
                 const month = now.getMonth() + 1;
                 
+                // Obtener registros de Firestore
                 const allRecords = await getRecordsByEmployee(selectedEmployee);
-                const todayRecords = allRecords.filter(r => r.date === today);
+                
+                // Actualizar todayRecords con datos reales de Firestore
+                // (pero mantener registros locales también)
+                const firestoreTodayRecords = allRecords.filter(r => r.date === today);
+                
+                // Combinar registros locales y de Firestore, eliminando duplicados
+                const localRecords = todayRecords.filter(r => 
+                    r.employeeId === selectedEmployee && r.date === today && r.localId
+                );
+                
+                // Crear un mapa para evitar duplicados
+                const recordMap = new Map();
+                
+                // Agregar registros de Firestore
+                firestoreTodayRecords.forEach(record => {
+                    if (!record.localId) {
+                        recordMap.set(record.timestamp + record.type, record);
+                    }
+                });
+                
+                // Agregar registros locales (sobrescriben si hay conflicto)
+                localRecords.forEach(record => {
+                    recordMap.set(record.timestamp + record.type, record);
+                });
+                
+                // Actualizar todayRecords
+                todayRecords = Array.from(recordMap.values());
+                todayRecords.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Calcular botones de fichaje basados en todayRecords
+                updatePunchButtonsFromTodayRecords();
+                
                 const monthRecords = allRecords.filter(r => {
                     const recordDate = new Date(r.date);
                     return recordDate.getFullYear() === year && recordDate.getMonth() + 1 === month;
@@ -2024,6 +2085,44 @@
             } catch (error) {
                 console.error("Error actualizando resumen:", error);
             }
+        }
+
+        function updatePunchButtonsFromTodayRecords() {
+            console.log("Actualizando botones desde todayRecords...");
+            
+            if (!selectedEmployee) {
+                document.getElementById('punchEntry').disabled = false;
+                document.getElementById('punchExit').disabled = true;
+                return;
+            }
+            
+            // Filtrar registros del empleado seleccionado
+            const employeeRecords = todayRecords.filter(r => r.employeeId === selectedEmployee);
+            const entries = employeeRecords.filter(r => r.type === 'entry');
+            const exits = employeeRecords.filter(r => r.type === 'exit');
+            
+            // Determinar si hay una entrada sin salida
+            let hasOpenEntry = false;
+            if (entries.length > 0) {
+                // Ordenar entradas por timestamp
+                const sortedEntries = [...entries].sort((a, b) => 
+                    (b.timestamp || 0) - (a.timestamp || 0)
+                );
+                const lastEntry = sortedEntries[0];
+                
+                // Verificar si hay una salida después de esta entrada
+                const hasExitAfter = exits.some(exit => 
+                    (exit.timestamp || 0) > (lastEntry.timestamp || 0)
+                );
+                
+                hasOpenEntry = !hasExitAfter;
+            }
+            
+            // Actualizar estado de botones
+            document.getElementById('punchEntry').disabled = hasOpenEntry;
+            document.getElementById('punchExit').disabled = !hasOpenEntry;
+            
+            console.log(`Estado botones: Entrada ${hasOpenEntry ? 'BLOQUEADA' : 'HABILITADA'}, Salida ${!hasOpenEntry ? 'BLOQUEADA' : 'HABILITADA'}`);
         }
 
         function calculateWorkHours(records) {
@@ -2079,20 +2178,21 @@
             if (!selectedEmployee) {
                 const row = document.createElement('tr');
                 row.innerHTML = `<td colspan="4" style="text-align: center; padding: 30px; color: var(--gray);">
-                    <i class="fas fa-user"></i> Seleccione un empleado para ver registros
+                    <i class="fas fa-user"></i> Seleccione un empleado
                 </td>`;
                 tbody.appendChild(row);
                 return;
             }
             
             try {
+                // Obtener registros de Firestore
                 const records = await getRecordsByEmployee(selectedEmployee);
                 const recentRecords = records.slice(0, 10);
                 
                 if (recentRecords.length === 0) {
                     const row = document.createElement('tr');
                     row.innerHTML = `<td colspan="4" style="text-align: center; padding: 30px; color: var(--gray);">
-                        <i class="fas fa-inbox"></i> No hay registros para mostrar
+                        <i class="fas fa-inbox"></i> No hay registros
                     </td>`;
                     tbody.appendChild(row);
                     return;
