@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- ... (código CSS anterior se mantiene igual) ... -->
+</head>
+<body>
+    <!-- ... (código HTML anterior se mantiene igual hasta la sección de JavaScript) ... -->
+
+    <!-- Main Application Script -->
+    <script>
+        // Configuración de Firebase - MODIFICADO para usar Realtime Database
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPYnqZuduPYVPu8HxvqDG0PX-Gft8MOE0",
+            authDomain: "fichaje-ded3c.firebaseapp.com",
+            projectId: "fichaje-ded3c",
+            storageBucket: "fichaje-ded3c.firebasestorage.app",
+            messagingSenderId: "920545104442",
+            appId: "1:920545104442:web:48195df317ad5ac1ff9b03",
+            measurementId: "G-DQ97WCF7WX",
+            databaseURL: "https://fichaje-ded3c-default-rtdb.europe-west1.firebasedatabase.app/" // Añadido para Realtime Database
+        };
+
+        // Estado de la aplicación
+        const state = {
+            currentEmployee: null,
+            employees: [],
+            isAdmin: false,
+            currentTime: new Date(),
+            firebaseConnected: false,
+            elapsedInterval: null,
+            editingEmployeeId: null,
+            activeEntry: null,
+            activeEntries: {} // NUEVO: para almacenar estados activos de todos los empleados
+        };
+
+        // Inicializar Firebase
+        let app, db, realtimeDb; // NUEVO: añadimos realtimeDb
+        
+        // ... (código anterior se mantiene igual hasta initApp) ...
+
+        // Inicializar la aplicación
+        async function initApp() {
+            showLoading("Inicializando sistema...");
+            
+            try {
+                // Verificar si Firebase está disponible
+                if (typeof firebase === 'undefined') {
+                    throw new Error("Firebase no se cargó correctamente");
+                }
+                
+                // Inicializar Firebase
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                realtimeDb = firebase.database(); // NUEVO: inicializar Realtime Database
+                
+                console.log("✅ Firebase inicializado con Realtime Database");
+                
+                // Verificar conexión a Firestore
+                await testFirestoreConnection();
+                
+                state.firebaseConnected = true;
+                elements.firebaseStatus.textContent = "Conectado a Firebase";
+                elements.firebaseStatus.style.color = "#27ae60";
+                
+                // Configurar fecha/hora manual
+                const now = new Date();
+                const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                elements.manualDatetime.value = localDateTime;
+                
+                // Cargar empleado recordado
+                loadRememberedEmployee();
+                
+                // Cargar empleados
+                await loadEmployees();
+                
+                // ESCUCHAR EN TIEMPO REAL LOS FICHAJES ACTIVOS - NUEVO
+                setupRealtimeActiveEntries();
+                
+                // Actualizar reloj
+                updateClock();
+                setInterval(updateClock, 1000);
+                
+                // Configurar event listeners
+                setupEventListeners();
+                
+                hideLoading();
+                showToast("Sistema inicializado correctamente", "success");
+                
+            } catch (error) {
+                console.error("Error inicializando la aplicación:", error);
+                elements.firebaseStatus.textContent = "Error de conexión";
+                elements.firebaseStatus.style.color = "#e74c3c";
+                hideLoading();
+                showToast(`Error: ${error.message}. Usando modo local.`, "error");
+                
+                // Cargar datos de demostración
+                loadDemoData();
+            }
+        }
+
+        // Configurar escucha en tiempo real de fichajes activos - NUEVA FUNCIÓN
+        function setupRealtimeActiveEntries() {
+            if (!realtimeDb) return;
+            
+            // Escuchar cambios en los fichajes activos
+            const activeEntriesRef = realtimeDb.ref('activeEntries');
+            
+            activeEntriesRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                state.activeEntries = data || {};
+                
+                console.log("Estado actualizado de fichajes activos:", state.activeEntries);
+                
+                // Si hay un empleado seleccionado, actualizar su UI
+                if (state.currentEmployee) {
+                    updateEmployeeUI();
+                }
+                
+                // Si estamos en modo admin, actualizar también
+                if (state.isAdmin) {
+                    updateAdminActiveStatus();
+                }
+            }, (error) => {
+                console.error("Error en tiempo real de activeEntries:", error);
+            });
+        }
+
+        // Actualizar estado activo para admin - NUEVA FUNCIÓN
+        function updateAdminActiveStatus() {
+            // Podemos mostrar qué empleados tienen fichajes activos en el panel admin
+            const activeCount = Object.keys(state.activeEntries).length;
+            console.log(`${activeCount} empleados con fichaje activo`);
+        }
+
+        // Guardar entrada activa en Realtime Database - NUEVA FUNCIÓN
+        async function saveActiveEntryToRealtime(employeeId, entryData) {
+            if (!realtimeDb) return;
+            
+            try {
+                await realtimeDb.ref(`activeEntries/${employeeId}`).set({
+                    ...entryData,
+                    lastUpdate: new Date().toISOString()
+                });
+                console.log(`Entrada activa guardada para ${employeeId}`);
+            } catch (error) {
+                console.error("Error guardando entrada activa en tiempo real:", error);
+            }
+        }
+
+        // Eliminar entrada activa de Realtime Database - NUEVA FUNCIÓN
+        async function removeActiveEntryFromRealtime(employeeId) {
+            if (!realtimeDb) return;
+            
+            try {
+                await realtimeDb.ref(`activeEntries/${employeeId}`).remove();
+                console.log(`Entrada activa eliminada para ${employeeId}`);
+            } catch (error) {
+                console.error("Error eliminando entrada activa en tiempo real:", error);
+            }
+        }
+
+        // Obtener entrada activa desde Realtime Database - NUEVA FUNCIÓN
+        async function getActiveEntryFromRealtime(employeeId) {
+            if (!realtimeDb) return null;
+            
+            try {
+                const snapshot = await realtimeDb.ref(`activeEntries/${employeeId}`).once('value');
+                return snapshot.val();
+            } catch (error) {
+                console.error("Error obteniendo entrada activa en tiempo real:", error);
+                return null;
+            }
+        }
+
+        // Actualizar UI del empleado - MODIFICADA
+        async function updateEmployeeUI() {
+            if (!state.currentEmployee) {
+                // Sin empleado seleccionado
+                elements.statusDot.className = 'status-dot inactive';
+                elements.statusText.textContent = 'No hay fichaje activo';
+                elements.entryBtn.disabled = true;
+                elements.exitBtn.disabled = true;
+                elements.elapsedTime.style.display = 'none';
+                return;
+            }
+            
+            const employeeId = state.currentEmployee.id;
+            
+            // Verificar si hay entrada activa en tiempo real
+            const realtimeActiveEntry = state.activeEntries[employeeId];
+            
+            // También verificar localStorage como respaldo
+            const savedEntry = localStorage.getItem(`activeEntry_${employeeId}`);
+            let localActiveEntry = null;
+            
+            if (savedEntry) {
+                try {
+                    const entry = JSON.parse(savedEntry);
+                    if (entry.timestamp) {
+                        entry.timestamp = new Date(entry.timestamp);
+                        if (!isNaN(entry.timestamp.getTime())) {
+                            localActiveEntry = entry;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing active entry from localStorage:", e);
+                }
+            }
+            
+            // Priorizar datos en tiempo real, si no hay, usar localStorage
+            if (realtimeActiveEntry) {
+                // Usar datos de tiempo real
+                state.activeEntry = {
+                    employeeId: realtimeActiveEntry.employeeId,
+                    employeeName: realtimeActiveEntry.employeeName,
+                    timestamp: new Date(realtimeActiveEntry.timestamp),
+                    type: 'entry'
+                };
+            } else if (localActiveEntry) {
+                // Usar datos locales como respaldo
+                state.activeEntry = localActiveEntry;
+                
+                // Sincronizar con tiempo real si está disponible
+                if (realtimeDb && state.firebaseConnected) {
+                    await saveActiveEntryToRealtime(employeeId, {
+                        employeeId: localActiveEntry.employeeId,
+                        employeeName: localActiveEntry.employeeName,
+                        timestamp: localActiveEntry.timestamp.toISOString()
+                    });
+                }
+            } else {
+                state.activeEntry = null;
+            }
+            
+            const hasActiveEntry = state.activeEntry !== null;
+            
+            // Actualizar indicador de estado
+            elements.statusDot.className = hasActiveEntry ? 'status-dot active' : 'status-dot inactive';
+            elements.statusText.textContent = hasActiveEntry ? 'Entrada registrada' : 'No hay fichaje activo';
+            
+            // Actualizar botones
+            elements.entryBtn.disabled = hasActiveEntry;
+            elements.exitBtn.disabled = !hasActiveEntry;
+            
+            // Mostrar/ocultar tiempo transcurrido
+            if (hasActiveEntry) {
+                updateElapsedTime();
+                
+                // Iniciar intervalo si no está activo
+                if (!state.elapsedInterval) {
+                    state.elapsedInterval = setInterval(updateElapsedTime, 1000);
+                }
+            } else {
+                elements.elapsedTime.style.display = 'none';
+                
+                // Detener intervalo
+                if (state.elapsedInterval) {
+                    clearInterval(state.elapsedInterval);
+                    state.elapsedInterval = null;
+                }
+            }
+            
+            // Actualizar días de vacaciones pendientes
+            const pendingVacation = state.currentEmployee.vacationDays2026 || 0;
+            elements.vacationPending.textContent = `${pendingVacation}d`;
+            elements.vacationBadge.textContent = `${pendingVacation} días`;
+        }
+
+        // Registrar tiempo (entrada/salida) - MODIFICADA
+        async function registerTime(type) {
+            if (!state.currentEmployee) {
+                showToast("Seleccione un operario primero", "warning");
+                return;
+            }
+            
+            // Usar hora manual o actual
+            const useManualTime = elements.manualDatetime.value !== '';
+            const recordTime = parseManualDateTime(elements.manualDatetime.value);
+            
+            // Crear registro
+            const record = {
+                employeeId: state.currentEmployee.id,
+                employeeName: state.currentEmployee.name,
+                type: type,
+                timestamp: recordTime,
+                date: recordTime.toISOString().split('T')[0],
+                year: recordTime.getFullYear(),
+                month: recordTime.getMonth() + 1,
+                day: recordTime.getDate(),
+                hour: recordTime.getHours(),
+                minute: recordTime.getMinutes()
+            };
+            
+            try {
+                // Guardar en Firestore
+                const docRef = await db.collection('records').add(record);
+                
+                // Si es una entrada, establecer como activa
+                if (type === 'entry') {
+                    state.activeEntry = record;
+                    
+                    // Guardar en localStorage
+                    localStorage.setItem(`activeEntry_${state.currentEmployee.id}`, JSON.stringify(record));
+                    
+                    // Guardar en Realtime Database para sincronización entre terminales
+                    await saveActiveEntryToRealtime(state.currentEmployee.id, {
+                        employeeId: record.employeeId,
+                        employeeName: record.employeeName,
+                        timestamp: recordTime.toISOString()
+                    });
+                    
+                    showToast("✅ Entrada registrada - Visible en todos los terminales", "success");
+                }
+                
+                // Si es una salida y hay entrada activa, calcular horas
+                if (type === 'exit' && state.activeEntry) {
+                    const entryTime = new Date(state.activeEntry.timestamp);
+                    const exitTime = recordTime;
+                    const hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
+                    
+                    // Actualizar registro de salida con horas trabajadas
+                    await db.collection('records').doc(docRef.id).update({
+                        hoursWorked: hoursWorked.toFixed(2)
+                    });
+                    
+                    // Limpiar entrada activa
+                    state.activeEntry = null;
+                    localStorage.removeItem(`activeEntry_${state.currentEmployee.id}`);
+                    
+                    // Eliminar de Realtime Database
+                    await removeActiveEntryFromRealtime(state.currentEmployee.id);
+                    
+                    showToast("✅ Salida registrada - Fichaje completado", "success");
+                }
+                
+                // Actualizar UI
+                updateEmployeeUI();
+                
+                // Recargar estadísticas
+                await loadEmployeeStatistics(state.currentEmployee.id);
+                
+                // Resetear fecha manual
+                if (useManualTime) {
+                    const now = new Date();
+                    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                    elements.manualDatetime.value = localDateTime;
+                }
+                
+            } catch (error) {
+                console.error("Error registrando tiempo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Añadir a la función setupEventListeners - NUEVO BOTÓN PARA LIMPIAR FICHAJES HUÉRFANOS
+        function setupEventListeners() {
+            // ... (código anterior de event listeners) ...
+            
+            // Botón para limpiar fichajes huérfanos (para debugging)
+            const cleanupBtn = document.createElement('button');
+            cleanupBtn.className = 'btn btn-warning btn-small';
+            cleanupBtn.innerHTML = '<i class="fas fa-broom"></i> Limpiar huérfanos';
+            cleanupBtn.style.marginTop = '10px';
+            cleanupBtn.style.display = 'none'; // Oculto por defecto
+            cleanupBtn.id = 'cleanup-orphans-btn';
+            document.querySelector('.header').appendChild(cleanupBtn);
+            
+            cleanupBtn.addEventListener('click', async () => {
+                if (confirm('¿Limpiar fichajes activos huérfanos? Esto eliminará entradas antiguas.')) {
+                    await cleanupOrphanedEntries();
+                }
+            });
+            
+            // Mostrar botón de limpieza si se mantiene Shift pulsado
+            let shiftPressed = false;
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Shift') shiftPressed = true;
+                if (shiftPressed && e.key === 'F12') {
+                    cleanupBtn.style.display = 'block';
+                }
+            });
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift') shiftPressed = false;
+            });
+        }
+
+        // Limpiar fichajes huérfanos - NUEVA FUNCIÓN
+        async function cleanupOrphanedEntries() {
+            if (!realtimeDb) return;
+            
+            try {
+                const snapshot = await realtimeDb.ref('activeEntries').once('value');
+                const activeEntries = snapshot.val();
+                
+                if (!activeEntries) {
+                    showToast("No hay fichajes activos para limpiar", "info");
+                    return;
+                }
+                
+                const now = new Date();
+                let cleanedCount = 0;
+                
+                for (const [employeeId, entry] of Object.entries(activeEntries)) {
+                    const entryTime = new Date(entry.timestamp);
+                    const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
+                    
+                    // Limpiar entradas con más de 24 horas (posiblemente huérfanas)
+                    if (hoursDiff > 24) {
+                        await realtimeDb.ref(`activeEntries/${employeeId}`).remove();
+                        cleanedCount++;
+                        console.log(`Limpiada entrada huérfana para ${employeeId} (${hoursDiff.toFixed(1)} horas)`);
+                    }
+                }
+                
+                showToast(`Limpiadas ${cleanedCount} entradas huérfanas`, "success");
+                
+            } catch (error) {
+                console.error("Error limpiando entradas huérfanas:", error);
+                showToast("Error limpiando entradas", "error");
+            }
+        }
+
+        // Añadir información de estado en el footer
+        function updateFooterStatus() {
+            if (state.currentEmployee && state.activeEntry) {
+                const activeCount = Object.keys(state.activeEntries).length;
+                elements.firebaseStatus.innerHTML = 
+                    `Conectado | ${activeCount} fichaje(s) activo(s) | Su estado: <strong>ACTIVO</strong>`;
+            } else {
+                const activeCount = Object.keys(state.activeEntries).length;
+                elements.firebaseStatus.innerHTML = 
+                    `Conectado | ${activeCount} fichaje(s) activo(s)`;
+            }
+        }
+
+        // Modificar setupRealtimeActiveEntries para actualizar footer
+        function setupRealtimeActiveEntries() {
+            if (!realtimeDb) return;
+            
+            const activeEntriesRef = realtimeDb.ref('activeEntries');
+            
+            activeEntriesRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                state.activeEntries = data || {};
+                
+                console.log("Estado actualizado de fichajes activos:", state.activeEntries);
+                
+                // Actualizar footer
+                updateFooterStatus();
+                
+                // Si hay un empleado seleccionado, actualizar su UI
+                if (state.currentEmployee) {
+                    updateEmployeeUI();
+                }
+                
+                // Si estamos en modo admin, actualizar también
+                if (state.isAdmin) {
+                    updateAdminActiveStatus();
+                }
+            }, (error) => {
+                console.error("Error en tiempo real de activeEntries:", error);
+            });
+        }
+
+        // ... (resto del código se mantiene igual) ...
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
