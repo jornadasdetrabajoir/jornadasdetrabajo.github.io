@@ -1,0 +1,32 @@
+async function findManualEntryForDay(employeeId, dateStr, exitTime) {
+    try {
+        // Buscar la última entrada manual del mismo día anterior a esta salida
+        const entriesSnapshot = await db.collection('records')
+            .where('employeeId', '==', employeeId)
+            .where('type', '==', 'entry')
+            .where('date', '==', dateStr)
+            .where('isManual', '==', true)  // FILTRO CLAVE: solo entradas manuales
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .get();
+        
+        if (!entriesSnapshot.empty) {
+            const entryDoc = entriesSnapshot.docs[0];
+            const entryData = entryDoc.data();
+            const entryTime = convertTimestampToDate(entryData.timestamp);
+            
+            // Verificar que la entrada sea anterior a la salida
+            if (entryTime < exitTime) {
+                return {
+                    id: entryDoc.id,
+                    time: entryTime,
+                    data: entryData
+                };
+            }
+        }
+        return null;
+    } catch (error) {
+        console.warn("Error buscando entrada manual:", error);
+        return null;
+    }
+}
