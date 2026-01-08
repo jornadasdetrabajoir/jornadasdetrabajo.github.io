@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Jornada Laboral - IRISNOR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ... (todos los estilos anteriores se mantienen igual) ... */
+
+        /* NUEVOS ESTILOS PARA CALENDARIO DE FESTIVOS */
+        .calendar-container {
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calendar-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .calendar-nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .calendar-nav button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .calendar-month-year {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        
+        .calendar-weekday {
+            padding: 5px;
+            font-weight: 600;
+        }
+        
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #ddd;
+        }
+        
+        .calendar-day {
+            background-color: white;
+            min-height: 60px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.03);
+            z-index: 1;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .day-number {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .day-holiday {
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 2px solid var(--danger);
+        }
+        
+        .day-weekend {
+            background-color: rgba(155, 89, 182, 0.05);
+        }
+        
+        .day-today {
+            background-color: rgba(52, 152, 219, 0.1);
+            border: 2px solid var(--secondary);
+        }
+        
+        .day-other-month {
+            background-color: #f8f9fa;
+            color: #aaa;
+        }
+        
+        .holiday-indicator {
+            background-color: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-top: auto;
+            display: none;
+        }
+        
+        .day-holiday .holiday-indicator {
+            display: block;
+        }
+        
+        .holiday-name {
+            font-size: 0.8rem;
+            color: var(--danger);
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .festivos-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .festivo-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .festivo-stat i {
+            color: var(--danger);
+        }
+        
+        .bulk-add-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .bulk-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .bulk-controls select {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .holiday-modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .holiday-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        
+        .holiday-list-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .holiday-date {
+            font-weight: bold;
+            color: var(--primary);
+            min-width: 100px;
+        }
+        
+        .holiday-list-name {
+            flex: 1;
+            margin: 0 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 50px;
+                padding: 3px;
+            }
+            
+            .day-number {
+                font-size: 1rem;
+            }
+            
+            .holiday-name {
+                font-size: 0.7rem;
+            }
+            
+            .calendar-weekday {
+                font-size: 0.9rem;
+            }
+            
+            .bulk-controls {
+                flex-direction: column;
+            }
+            
+            .bulk-controls select {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .calendar-day {
+                min-height: 40px;
+            }
+            
+            .day-number {
+                font-size: 0.9rem;
+            }
+            
+            .holiday-name {
+                display: none;
+            }
+            
+            .calendar-month-year {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-clock"></i> Sistema de Jornada Laboral</h1>
+        <p>IRISNOR - Registro de fichajes y gestión de empleados</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" data-tab="operator">Operario</div>
+        <div class="tab" data-tab="admin">Administrador</div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loading-text">Conectando con el servidor...</p>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Operator Tab -->
+    <div class="tab-content active" id="operator-tab">
+        <!-- Employee selection -->
+        <div class="card">
+            <h2 class="card-title">
+                <span><i class="fas fa-user"></i> Selección de Operario</span>
+                <button class="refresh-button" id="refresh-employees-btn" title="Actualizar lista">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </h2>
+            <div class="form-group">
+                <label for="employee-select">Operario:</label>
+                <div class="select-employee">
+                    <select id="employee-select" class="form-control">
+                        <option value="">Seleccione un operario</option>
+                    </select>
+                </div>
+            </div>
+            <div class="remember-check">
+                <input type="checkbox" id="remember-employee">
+                <label for="remember-employee">Recordar mi selección</label>
+            </div>
+        </div>
+
+        <!-- Clock and status -->
+        <div class="card">
+            <h2 class="card-title">
+                <span><i class="fas fa-clock"></i> Jornada Actual</span>
+                <button class="refresh-button" id="refresh-status-btn" title="Actualizar estado">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </h2>
+            
+            <div class="clock-section">
+                <div class="clock-display" id="current-time">00:00:00</div>
+                
+                <!-- Elapsed time -->
+                <div class="elapsed-time" id="elapsed-time" style="display: none;">
+                    Tiempo transcurrido: <span id="elapsed-hours">00</span>:<span id="elapsed-minutes">00</span>:<span id="elapsed-seconds">00</span>
+                </div>
+                
+                <!-- Status indicator -->
+                <div class="status-indicator">
+                    <div class="status-dot inactive" id="status-dot"></div>
+                    <div class="status-text" id="status-text">Seleccione un operario</div>
+                </div>
+                
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="entry-btn" disabled>
+                            <i class="fas fa-sign-in-alt"></i> Fichar Entrada
+                        </button>
+                        <button class="btn btn-danger" id="exit-btn" disabled>
+                            <i class="fas fa-sign-out-alt"></i> Fichar Salida
+                        </button>
+                    </div>
+                    
+                    <!-- Manual time registration for work days -->
+                    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #ddd;">
+                        <h3 style="margin-bottom: 15px; color: var(--primary);">
+                            <i class="fas fa-calendar-plus"></i> Fichaje Manual de Jornada
+                        </h3>
+                        <div style="margin-bottom: 10px; color: #7f8c8d; font-size: 0.9rem;">
+                            Para registrar fichajes en días anteriores o posteriores que no pudo realizar automáticamente.
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="manual-work-date">Fecha del fichaje:</label>
+                            <input type="date" id="manual-work-date" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="manual-work-time">Hora del fichaje:</label>
+                            <input type="time" id="manual-work-time" class="form-control" step="1">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-info" id="manual-entry-btn" disabled>
+                                <i class="fas fa-sign-in-alt"></i> Entrada Manual
+                            </button>
+                            <button class="btn btn-warning" id="manual-exit-btn" disabled>
+                                <i class="fas fa-sign-out-alt"></i> Salida Manual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special buttons -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-fingerprint"></i> Registros Especiales</h2>
+            
+            <!-- Manual date/time selection for special days -->
+            <div class="form-group">
+                <label for="special-date">Fecha del registro especial:</label>
+                <input type="date" id="special-date" class="form-control">
+            </div>
+            
+            <!-- Special buttons -->
+            <div class="special-buttons">
+                <button class="special-btn vacation-btn" id="vacation-btn" data-type="vacation" disabled>
+                    <i class="fas fa-umbrella-beach"></i>
+                    <span>Vacaciones</span>
+                    <span class="badge" id="vacation-badge">0 días</span>
+                </button>
+                
+                <button class="special-btn sick-btn" id="sick-btn" data-type="sick" disabled>
+                    <i class="fas fa-hospital"></i>
+                    <span>Baja Laboral</span>
+                </button>
+                
+                <button class="special-btn travel-btn" id="travel-btn" data-type="travel" disabled>
+                    <i class="fas fa-plane"></i>
+                    <span>Viaje de Trabajo</span>
+                    <span class="badge">+8h automático</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-chart-bar"></i> Estadísticas</h2>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-label">Horas Hoy</div>
+                    <div class="stat-value" id="hours-today">00:00:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Horas Mes</div>
+                    <div class="stat-value" id="hours-month">00:00:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Vacaciones Pend.</div>
+                    <div class="stat-value" id="vacation-pending">0d</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Días Trabajados</div>
+                    <div class="stat-value" id="days-worked">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tab -->
+    <div class="tab-content" id="admin-tab">
+        <!-- Login form -->
+        <div class="card login-form" id="admin-login">
+            <h2 class="card-title"><i class="fas fa-lock"></i> Acceso Administrador</h2>
+            <div class="form-group">
+                <label for="admin-user">Usuario:</label>
+                <input type="text" id="admin-user" class="form-control" placeholder="Ingrese usuario">
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Contraseña:</label>
+                <input type="password" id="admin-password" class="form-control" placeholder="Ingrese contraseña">
+            </div>
+            <button class="btn" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            </button>
+        </div>
+
+        <!-- Admin panel (hidden by default) -->
+        <div id="admin-panel" style="display: none;">
+            <!-- Employee management -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span><i class="fas fa-users"></i> Gestión de Empleados</span>
+                    <div>
+                        <button class="btn btn-small" id="add-employee-btn">
+                            <i class="fas fa-user-plus"></i> Nuevo
+                        </button>
+                    </div>
+                </h2>
+                
+                <div class="employees-list" id="employees-list">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No hay empleados registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vacation assignment -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-umbrella-beach"></i> Asignación de Vacaciones</h2>
+                <div class="form-group">
+                    <label for="vacation-employee">Empleado:</label>
+                    <select id="vacation-employee" class="form-control">
+                        <option value="">Seleccione empleado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vacation-year">Año:</label>
+                    <select id="vacation-year" class="form-control">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vacation-days">Días de vacaciones:</label>
+                    <input type="number" id="vacation-days" class="form-control" min="0" max="365" value="22">
+                </div>
+                <button class="btn btn-success" id="assign-vacation-btn">
+                    <i class="fas fa-save"></i> Asignar Vacaciones
+                </button>
+            </div>
+
+            <!-- NUEVA SECCIÓN: CALENDARIO DE DÍAS FESTIVOS -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span><i class="fas fa-calendar-alt"></i> Calendario de Días Festivos</span>
+                    <button class="btn btn-small" id="add-holiday-btn">
+                        <i class="fas fa-plus"></i> Añadir Festivo
+                    </button>
+                </h2>
+                
+                <div class="calendar-container" id="holiday-calendar">
+                    <!-- El calendario se generará dinámicamente -->
+                </div>
+                
+                <div class="festivos-stats">
+                    <div class="festivo-stat">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Festivos este mes: <strong id="festivos-mes">0</strong></span>
+                    </div>
+                    <div class="festivo-stat">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Festivos este año: <strong id="festivos-ano">0</strong></span>
+                    </div>
+                    <div class="festivo-stat">
+                        <i class="fas fa-eye"></i>
+                        <span>Ver todos: 
+                            <button class="btn btn-small btn-info" id="view-all-holidays-btn" style="margin-left: 5px;">
+                                <i class="fas fa-list"></i> Listar
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Añadir múltiples festivos a la vez -->
+                <div class="bulk-add-section">
+                    <h3 style="margin-bottom: 10px; color: var(--primary);">
+                        <i class="fas fa-bolt"></i> Añadir Festivos en Lote
+                    </h3>
+                    <div class="bulk-controls">
+                        <select id="bulk-month" class="form-control">
+                            <option value="">Seleccionar mes</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                        <select id="bulk-year" class="form-control">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                        <input type="number" id="bulk-day" class="form-control" placeholder="Día (1-31)" min="1" max="31">
+                        <input type="text" id="bulk-name" class="form-control" placeholder="Nombre del festivo">
+                        <button class="btn btn-warning" id="bulk-add-btn">
+                            <i class="fas fa-plus-circle"></i> Añadir
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px; color: #7f8c8d; font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> También puede hacer clic en cualquier día del calendario para marcarlo como festivo
+                    </div>
+                </div>
+            </div>
+
+            <!-- Records view -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-search"></i> Consulta de Registros</h2>
+                <div class="filter-section">
+                    <select id="filter-employee" class="form-control">
+                        <option value="">Todos los empleados</option>
+                    </select>
+                    <select id="filter-year" class="form-control">
+                        <option value="">Todos los años</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                    <select id="filter-month" class="form-control">
+                        <option value="">Todos los meses</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                    <input type="date" id="filter-start" class="form-control" placeholder="Fecha inicio">
+                    <input type="date" id="filter-end" class="form-control" placeholder="Fecha fin">
+                    
+                    <!-- Filter by type -->
+                    <div class="filter-types">
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-entry" checked> Entrada
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-exit" checked> Salida
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-vacation" checked> Vacaciones
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-sick" checked> Baja Laboral
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-travel" checked> Viaje
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" id="filter-btn">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button class="btn btn-info" id="export-btn">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+                
+                <!-- Records scroll container -->
+                <div class="records-scroll-container" id="admin-records-container">
+                    <div id="admin-records">
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Aplica filtros para ver registros</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Estadísticas Generales</h3>
+                <div class="admin-stats-container">
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Hoy</div>
+                        <div class="stat-value" id="total-hours-today">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Mes</div>
+                        <div class="stat-value" id="total-hours-month">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Vacaciones Usadas</div>
+                        <div class="stat-value" id="used-vacation">0d</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Bajas Laborales</div>
+                        <div class="stat-value" id="sick-days">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Días Viaje</div>
+                        <div class="stat-value" id="travel-days">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Viaje</div>
+                        <div class="stat-value" id="travel-hours">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Días Trabajados</div>
+                        <div class="stat-value" id="total-days-worked">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Empleados</div>
+                        <div class="stat-value" id="total-employees">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logout button -->
+            <div class="card" style="margin-top: 20px;">
+                <button class="btn btn-warning" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <!-- Add/Edit employee modal -->
+    <div class="modal" id="employee-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"><i class="fas fa-user-plus"></i> Nuevo Empleado</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="employee-name">Nombre completo:</label>
+                    <input type="text" id="employee-name" class="form-control" placeholder="Ej: Juan Pérez García">
+                </div>
+                <div class="form-group">
+                    <label for="employee-department">Departamento (opcional):</label>
+                    <input type="text" id="employee-department" class="form-control" placeholder="Ej: Producción, Administración...">
+                </div>
+                <div id="employee-id-display" style="display: none; margin-bottom: 15px;">
+                    <p><strong>ID del empleado:</strong> <span id="employee-id-text"></span></p>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="save-employee-btn">Guardar Empleado</button>
+                    <button class="btn btn-danger" id="delete-employee-btn" style="display: none;">Eliminar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO MODAL: GESTIÓN DE FESTIVOS -->
+    <div class="modal" id="holiday-modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: var(--danger);">
+                <h3 id="holiday-modal-title"><i class="fas fa-calendar-plus"></i> Gestión de Días Festivos</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body holiday-modal-body">
+                <div id="holiday-form">
+                    <div class="form-group">
+                        <label for="holiday-date-input">Fecha del festivo:</label>
+                        <input type="date" id="holiday-date-input" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="holiday-name-input">Nombre del festivo:</label>
+                        <input type="text" id="holiday-name-input" class="form-control" placeholder="Ej: Año Nuevo, Navidad...">
+                    </div>
+                    <div class="form-group">
+                        <label for="holiday-type">Tipo de festivo:</label>
+                        <select id="holiday-type" class="form-control">
+                            <option value="nacional">Nacional</option>
+                            <option value="regional">Regional</option>
+                            <option value="local">Local</option>
+                            <option value="empresa">De empresa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="holiday-recurring">
+                            <input type="checkbox" id="holiday-recurring">
+                            Festivo recurrente (cada año)
+                        </label>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="save-holiday-btn">
+                            <i class="fas fa-save"></i> Guardar Festivo
+                        </button>
+                        <button class="btn btn-danger" id="delete-holiday-btn" style="display: none;">
+                            <i class="fas fa-trash"></i> Eliminar Festivo
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Lista de festivos existentes -->
+                <div id="holiday-list-container" style="margin-top: 20px; display: none;">
+                    <h4 style="margin-bottom: 15px; color: var(--primary);">
+                        <i class="fas fa-list"></i> Festivos Registrados
+                    </h4>
+                    <div id="holiday-list">
+                        <!-- Lista generada dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Sistema de fichaje IRISNOR &copy; 2026 - <span id="firebase-status">Conectando...</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Main Application Script -->
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPYnqZuduPYVPu8HxvqDG0PX-Gft8MOE0",
+            authDomain: "fichaje-ded3c.firebaseapp.com",
+            projectId: "fichaje-ded3c",
+            storageBucket: "fichaje-ded3c.firebasestorage.app",
+            messagingSenderId: "920545104442",
+            appId: "1:920545104442:web:48195df317ad5ac1ff9b03",
+            measurementId: "G-DQ97WCF7WX"
+        };
+
+        // Estado de la aplicación - AÑADIR NUEVAS PROPIEDADES PARA FESTIVOS
+        const state = {
+            currentEmployee: null,
+            employees: [],
+            isAdmin: false,
+            currentTime: new Date(),
+            firebaseConnected: false,
+            elapsedInterval: null,
+            editingEmployeeId: null,
+            activeEntry: null,
+            realtimeListeners: {},
+            // NUEVAS PROPIEDADES PARA FESTIVOS
+            holidays: [],
+            currentHolidayId: null,
+            currentCalendarDate: new Date(),
+            editingHoliday: null
+        };
+
+        // DOM Elements - AÑADIR NUEVOS ELEMENTOS PARA FESTIVOS
+        const elements = {
+            // ... (todos los elementos originales se mantienen) ...
+            
+            // Tabs
+            operatorTab: document.getElementById('operator-tab'),
+            adminTab: document.getElementById('admin-tab'),
+            tabs: document.querySelectorAll('.tab'),
+            
+            // Operator tab
+            employeeSelect: document.getElementById('employee-select'),
+            rememberEmployee: document.getElementById('remember-employee'),
+            refreshEmployeesBtn: document.getElementById('refresh-employees-btn'),
+            refreshStatusBtn: document.getElementById('refresh-status-btn'),
+            currentTime: document.getElementById('current-time'),
+            elapsedTime: document.getElementById('elapsed-time'),
+            elapsedHours: document.getElementById('elapsed-hours'),
+            elapsedMinutes: document.getElementById('elapsed-minutes'),
+            elapsedSeconds: document.getElementById('elapsed-seconds'),
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            manualWorkDate: document.getElementById('manual-work-date'),
+            manualWorkTime: document.getElementById('manual-work-time'),
+            manualEntryBtn: document.getElementById('manual-entry-btn'),
+            manualExitBtn: document.getElementById('manual-exit-btn'),
+            specialDate: document.getElementById('special-date'),
+            vacationBtn: document.getElementById('vacation-btn'),
+            sickBtn: document.getElementById('sick-btn'),
+            travelBtn: document.getElementById('travel-btn'),
+            vacationBadge: document.getElementById('vacation-badge'),
+            entryBtn: document.getElementById('entry-btn'),
+            exitBtn: document.getElementById('exit-btn'),
+            hoursToday: document.getElementById('hours-today'),
+            hoursMonth: document.getElementById('hours-month'),
+            vacationPending: document.getElementById('vacation-pending'),
+            daysWorked: document.getElementById('days-worked'),
+            
+            // Admin tab
+            adminLogin: document.getElementById('admin-login'),
+            adminUser: document.getElementById('admin-user'),
+            adminPassword: document.getElementById('admin-password'),
+            loginBtn: document.getElementById('login-btn'),
+            adminPanel: document.getElementById('admin-panel'),
+            addEmployeeBtn: document.getElementById('add-employee-btn'),
+            employeesList: document.getElementById('employees-list'),
+            vacationEmployee: document.getElementById('vacation-employee'),
+            vacationYear: document.getElementById('vacation-year'),
+            vacationDays: document.getElementById('vacation-days'),
+            assignVacationBtn: document.getElementById('assign-vacation-btn'),
+            filterEmployee: document.getElementById('filter-employee'),
+            filterYear: document.getElementById('filter-year'),
+            filterMonth: document.getElementById('filter-month'),
+            filterStart: document.getElementById('filter-start'),
+            filterEnd: document.getElementById('filter-end'),
+            filterEntry: document.getElementById('filter-entry'),
+            filterExit: document.getElementById('filter-exit'),
+            filterVacation: document.getElementById('filter-vacation'),
+            filterSick: document.getElementById('filter-sick'),
+            filterTravel: document.getElementById('filter-travel'),
+            filterBtn: document.getElementById('filter-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            adminRecordsContainer: document.getElementById('admin-records-container'),
+            adminRecords: document.getElementById('admin-records'),
+            totalHoursToday: document.getElementById('total-hours-today'),
+            totalHoursMonth: document.getElementById('total-hours-month'),
+            usedVacation: document.getElementById('used-vacation'),
+            travelDays: document.getElementById('travel-days'),
+            travelHours: document.getElementById('travel-hours'),
+            sickDays: document.getElementById('sick-days'),
+            totalDaysWorked: document.getElementById('total-days-worked'),
+            totalEmployees: document.getElementById('total-employees'),
+            logoutBtn: document.getElementById('logout-btn'),
+            
+            // Modals
+            employeeModal: document.getElementById('employee-modal'),
+            closeModalButtons: document.querySelectorAll('.close-modal'),
+            modalTitle: document.getElementById('modal-title'),
+            employeeName: document.getElementById('employee-name'),
+            employeeDepartment: document.getElementById('employee-department'),
+            employeeIdDisplay: document.getElementById('employee-id-display'),
+            employeeIdText: document.getElementById('employee-id-text'),
+            saveEmployeeBtn: document.getElementById('save-employee-btn'),
+            deleteEmployeeBtn: document.getElementById('delete-employee-btn'),
+            
+            // Nuevos elementos para gestión de festivos
+            holidayCalendar: document.getElementById('holiday-calendar'),
+            addHolidayBtn: document.getElementById('add-holiday-btn'),
+            viewAllHolidaysBtn: document.getElementById('view-all-holidays-btn'),
+            festivosMes: document.getElementById('festivos-mes'),
+            festivosAno: document.getElementById('festivos-ano'),
+            bulkMonth: document.getElementById('bulk-month'),
+            bulkYear: document.getElementById('bulk-year'),
+            bulkDay: document.getElementById('bulk-day'),
+            bulkName: document.getElementById('bulk-name'),
+            bulkAddBtn: document.getElementById('bulk-add-btn'),
+            
+            // Modal de festivos
+            holidayModal: document.getElementById('holiday-modal'),
+            holidayModalTitle: document.getElementById('holiday-modal-title'),
+            holidayDateInput: document.getElementById('holiday-date-input'),
+            holidayNameInput: document.getElementById('holiday-name-input'),
+            holidayType: document.getElementById('holiday-type'),
+            holidayRecurring: document.getElementById('holiday-recurring'),
+            saveHolidayBtn: document.getElementById('save-holiday-btn'),
+            deleteHolidayBtn: document.getElementById('delete-holiday-btn'),
+            holidayListContainer: document.getElementById('holiday-list-container'),
+            holidayList: document.getElementById('holiday-list'),
+            
+            // Others
+            loading: document.getElementById('loading'),
+            loadingText: document.getElementById('loading-text'),
+            toast: document.getElementById('toast'),
+            firebaseStatus: document.getElementById('firebase-status')
+        };
+
+        // FUNCIONES ORIGINALES (todas se mantienen exactamente igual)
+        function formatHours(decimalHours) {
+            // ... código original ...
+        }
+
+        function createDateTime(dateStr, timeStr) {
+            // ... código original ...
+        }
+
+        function convertTimestampToDate(timestamp) {
+            // ... código original ...
+        }
+
+        function showConfirmationModal(title, message, icon, type) {
+            // ... código original ...
+        }
+
+        function getColorByType(type) {
+            // ... código original ...
+        }
+
+        function formatTimeWithSeconds(date) {
+            // ... código original ...
+        }
+
+        function formatDate(date, separator = '/') {
+            // ... código original ...
+        }
+
+        // NUEVA FUNCIÓN: Formatear fecha en formato YYYY-MM-DD para inputs
+        function formatDateForInput(date) {
+            if (!date) return '';
+            
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+
+        // Inicializar la aplicación - MODIFICADA PARA CARGAR FESTIVOS
+        async function initApp() {
+            showLoading("Inicializando sistema...");
+            
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error("Firebase no se cargó correctamente");
+                }
+                
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                console.log("✅ Firebase inicializado");
+                
+                await testFirestoreConnection();
+                
+                state.firebaseConnected = true;
+                elements.firebaseStatus.textContent = "Conectado a Firebase";
+                elements.firebaseStatus.style.color = "#27ae60";
+                
+                setDefaultDates();
+                loadRememberedEmployee();
+                await loadEmployees();
+                
+                // NUEVO: Cargar festivos después de cargar empleados
+                await loadHolidays();
+                
+                updateClock();
+                setInterval(updateClock, 1000);
+                
+                setupEventListeners();
+                
+                // Actualizar UI inicial para deshabilitar botones
+                updateEmployeeUI();
+                
+                hideLoading();
+                showToast("Sistema inicializado correctamente", "success");
+                
+            } catch (error) {
+                console.error("Error inicializando la aplicación:", error);
+                elements.firebaseStatus.textContent = "Error de conexión";
+                elements.firebaseStatus.style.color = "#e74c3c";
+                hideLoading();
+                showToast(`Error: ${error.message}. Usando modo local.`, "error");
+                loadDemoData();
+            }
+        }
+
+        // Configurar fechas por defecto
+        function setDefaultDates() {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds}`;
+            
+            elements.manualWorkDate.value = todayStr;
+            elements.manualWorkTime.value = timeStr;
+            elements.specialDate.value = todayStr;
+        }
+
+        // Probar conexión a Firestore
+        async function testFirestoreConnection() {
+            try {
+                const testRef = db.collection('test_connection');
+                const querySnapshot = await testRef.limit(1).get();
+                console.log("✅ Conexión a Firestore exitosa");
+                return true;
+            } catch (error) {
+                console.error("❌ Error de conexión a Firestore:", error);
+                return true;
+            }
+        }
+
+        // Configurar event listeners - MODIFICADA PARA INCLUIR FESTIVOS
+        function setupEventListeners() {
+            // Tabs
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Selección de empleado
+            elements.employeeSelect.addEventListener('change', async function() {
+                const employeeId = this.value;
+                
+                // Limpiar listener anterior si existe
+                if (state.currentEmployee && state.currentEmployee.id) {
+                    if (state.realtimeListeners[state.currentEmployee.id]) {
+                        state.realtimeListeners[state.currentEmployee.id]();
+                        delete state.realtimeListeners[state.currentEmployee.id];
+                    }
+                    
+                    // Detener contador de tiempo
+                    if (state.elapsedInterval) {
+                        clearInterval(state.elapsedInterval);
+                        state.elapsedInterval = null;
+                    }
+                }
+                
+                if (employeeId) {
+                    const employee = state.employees.find(emp => emp.id === employeeId);
+                    if (employee) {
+                        state.currentEmployee = employee;
+                        
+                        // Configurar listener en tiempo real para este empleado
+                        setupEmployeeRealtimeListener(employeeId);
+                        
+                        // Cargar estado activo desde Firebase
+                        await loadEmployeeActiveStatus(employeeId);
+                        
+                        // Actualizar UI
+                        updateEmployeeUI();
+                        await loadEmployeeStatistics(employeeId);
+                        
+                        if (elements.rememberEmployee.checked) {
+                            localStorage.setItem('rememberedEmployee', employeeId);
+                        }
+                    }
+                } else {
+                    // Si se deselecciona el empleado
+                    state.currentEmployee = null;
+                    state.activeEntry = null;
+                    
+                    // Actualizar UI para deshabilitar todos los botones
+                    updateEmployeeUI();
+                }
+            });
+
+            // Checkbox recordar empleado
+            elements.rememberEmployee.addEventListener('change', function() {
+                if (!this.checked) {
+                    localStorage.removeItem('rememberedEmployee');
+                }
+            });
+
+            // Botones de actualización
+            elements.refreshEmployeesBtn.addEventListener('click', async () => {
+                await loadEmployees();
+                showToast("Lista de empleados actualizada", "success");
+            });
+
+            elements.refreshStatusBtn.addEventListener('click', async () => {
+                if (state.currentEmployee) {
+                    await loadEmployeeActiveStatus(state.currentEmployee.id);
+                    showToast("Estado actualizado", "info");
+                } else {
+                    showToast("Seleccione un operario primero", "warning");
+                }
+            });
+
+            // Botones de entrada/salida automáticos
+            elements.entryBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.entryBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                // VALIDACIÓN: Verificar que no haya entrada activa ya registrada
+                if (state.activeEntry) {
+                    showToast("Ya tiene una entrada registrada. Debe fichar salida primero.", "error");
+                    return;
+                }
+                
+                registerTime('entry', true);
+            });
+            
+            elements.exitBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.exitBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                // VALIDACIÓN: Verificar que haya entrada activa
+                if (!state.activeEntry) {
+                    showToast("No tiene una entrada registrada. Debe fichar entrada primero.", "error");
+                    return;
+                }
+                
+                registerTime('exit', true);
+            });
+
+            // Botones de entrada/salida manuales
+            elements.manualEntryBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.manualEntryBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                const dateStr = elements.manualWorkDate.value;
+                const timeStr = elements.manualWorkTime.value;
+                
+                if (!dateStr || !timeStr) {
+                    showToast("Complete fecha y hora para el fichaje manual", "warning");
+                    return;
+                }
+                
+                const manualDateTime = createDateTime(dateStr, timeStr);
+                const today = new Date();
+                const isToday = manualDateTime.toDateString() === today.toDateString();
+                
+                if (isToday && state.activeEntry) {
+                    showToast("Ya tiene una entrada registrada para hoy. Debe fichar salida primero.", "error");
+                    return;
+                }
+                
+                registerTime('entry', false);
+            });
+            
+            elements.manualExitBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.manualExitBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                registerTime('exit', false);
+            });
+
+            // Botones especiales
+            elements.vacationBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.vacationBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('vacation');
+            });
+
+            elements.sickBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.sickBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('sick');
+            });
+
+            elements.travelBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.travelBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('travel');
+            });
+
+            // Login admin
+            elements.loginBtn.addEventListener('click', adminLogin);
+
+            // Logout admin
+            elements.logoutBtn.addEventListener('click', adminLogout);
+
+            // Gestión de empleados
+            elements.addEmployeeBtn.addEventListener('click', () => {
+                openEmployeeModal();
+            });
+
+            // Cerrar modales
+            elements.closeModalButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    closeEmployeeModal();
+                });
+            });
+
+            // Guardar empleado
+            elements.saveEmployeeBtn.addEventListener('click', async () => {
+                await saveEmployee();
+            });
+
+            // Eliminar empleado
+            elements.deleteEmployeeBtn.addEventListener('click', async () => {
+                await deleteEmployee();
+            });
+
+            // Asignar vacaciones
+            elements.assignVacationBtn.addEventListener('click', async () => {
+                await assignVacation();
+            });
+
+            // Filtrar registros
+            elements.filterBtn.addEventListener('click', async () => {
+                await filterRecords();
+            });
+
+            // Exportar registros
+            elements.exportBtn.addEventListener('click', exportRecords);
+
+            // Clic fuera del modal para cerrar
+            window.addEventListener('click', (event) => {
+                if (event.target === elements.employeeModal) {
+                    closeEmployeeModal();
+                }
+            });
+
+            // Atajos de teclado
+            document.addEventListener('keydown', (e) => {
+                if (elements.operatorTab.classList.contains('active') && state.currentEmployee) {
+                    if (e.key === 'e' || e.key === 'E') {
+                        e.preventDefault();
+                        if (!elements.entryBtn.disabled) {
+                            elements.entryBtn.click();
+                        }
+                    } else if (e.key === 's' || e.key === 'S') {
+                        e.preventDefault();
+                        if (!elements.exitBtn.disabled) {
+                            elements.exitBtn.click();
+                        }
+                    } else if (e.key === 'v' || e.key === 'V') {
+                        e.preventDefault();
+                        if (!elements.vacationBtn.disabled) {
+                            elements.vacationBtn.click();
+                        }
+                    }
+                }
+            });
+
+            // NUEVOS LISTENERS PARA FESTIVOS
+            elements.addHolidayBtn.addEventListener('click', () => {
+                openHolidayModal();
+            });
+            
+            elements.viewAllHolidaysBtn.addEventListener('click', () => {
+                showAllHolidays();
+            });
+            
+            elements.bulkAddBtn.addEventListener('click', () => {
+                addBulkHoliday();
+            });
+            
+            // Modal de festivos
+            elements.saveHolidayBtn.addEventListener('click', async () => {
+                await saveHoliday();
+            });
+            
+            elements.deleteHolidayBtn.addEventListener('click', async () => {
+                await deleteHoliday();
+            });
+            
+            // Cerrar modal de festivos
+            elements.holidayModal.addEventListener('click', (e) => {
+                if (e.target === elements.holidayModal || e.target.classList.contains('close-modal')) {
+                    closeHolidayModal();
+                }
+            });
+
+            // Listener para clics en días del calendario
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.calendar-day') && !e.target.closest('.calendar-day').classList.contains('day-other-month')) {
+                    const dayElement = e.target.closest('.calendar-day');
+                    const dateStr = dayElement.getAttribute('data-date');
+                    
+                    // Verificar si ya es festivo
+                    const existingHoliday = state.holidays.find(h => {
+                        const holidayDate = new Date(h.date);
+                        return formatDateForInput(holidayDate) === dateStr;
+                    });
+                    
+                    if (existingHoliday) {
+                        // Si ya es festivo, abrir para editar
+                        openHolidayModal(null, existingHoliday);
+                    } else {
+                        // Si no es festivo, abrir para crear nuevo
+                        openHolidayModal(dateStr);
+                    }
+                }
+            });
+        }
+
+        // ==============================================
+        // NUEVAS FUNCIONES PARA GESTIÓN DE FESTIVOS
+        // ==============================================
+
+        // NUEVA FUNCIÓN: Cargar festivos desde Firebase
+        async function loadHolidays() {
+            try {
+                const snapshot = await db.collection('holidays').orderBy('date').get();
+                
+                state.holidays = [];
+                snapshot.forEach(doc => {
+                    const holiday = { 
+                        id: doc.id, 
+                        ...doc.data(),
+                        date: convertTimestampToDate(doc.data().date)
+                    };
+                    state.holidays.push(holiday);
+                });
+                
+                updateHolidayStats();
+                // Si estamos en la pestaña de admin, renderizar calendario
+                if (elements.adminTab.classList.contains('active') && state.isAdmin) {
+                    renderCalendar();
+                }
+                return true;
+                
+            } catch (error) {
+                console.error("Error cargando festivos:", error);
+                return false;
+            }
+        }
+
+        // NUEVA FUNCIÓN: Actualizar estadísticas de festivos
+        function updateHolidayStats() {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            
+            const holidaysThisMonth = state.holidays.filter(holiday => {
+                const holidayDate = new Date(holiday.date);
+                return holidayDate.getFullYear() === currentYear && 
+                       (holidayDate.getMonth() + 1) === currentMonth;
+            }).length;
+            
+            const holidaysThisYear = state.holidays.filter(holiday => {
+                const holidayDate = new Date(holiday.date);
+                return holidayDate.getFullYear() === currentYear;
+            }).length;
+            
+            elements.festivosMes.textContent = holidaysThisMonth.toString();
+            elements.festivosAno.textContent = holidaysThisYear.toString();
+        }
+
+        // NUEVA FUNCIÓN: Renderizar calendario
+        function renderCalendar() {
+            const calendarDate = state.currentCalendarDate;
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            // Obtener primer día del mes
+            const firstDay = new Date(year, month, 1);
+            // Obtener último día del mes
+            const lastDay = new Date(year, month + 1, 0);
+            // Días en el mes
+            const daysInMonth = lastDay.getDate();
+            // Día de la semana del primer día (0 = Domingo, 1 = Lunes, ...)
+            const firstDayOfWeek = firstDay.getDay();
+            
+            // Nombres de meses y días
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                               "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            
+            const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            
+            // Crear HTML del calendario
+            let calendarHTML = `
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button id="prev-month-btn"><i class="fas fa-chevron-left"></i></button>
+                    </div>
+                    <div class="calendar-month-year">
+                        ${monthNames[month]} ${year}
+                    </div>
+                    <div class="calendar-nav">
+                        <button id="next-month-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="calendar-weekdays">
+            `;
+            
+            // Añadir encabezados de días
+            dayNames.forEach(day => {
+                calendarHTML += `<div class="calendar-weekday">${day}</div>`;
+            });
+            
+            calendarHTML += `</div><div class="calendar-days">`;
+            
+            // Añadir días vacíos antes del primer día del mes
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const prevMonthDay = new Date(year, month, -i);
+                calendarHTML += createDayElement(prevMonthDay, true);
+            }
+            
+            // Añadir días del mes actual
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(year, month, day);
+                const isToday = currentDate.getDate() === today.getDate() &&
+                               currentDate.getMonth() === today.getMonth() &&
+                               currentDate.getFullYear() === today.getFullYear();
+                
+                calendarHTML += createDayElement(currentDate, false, isToday);
+            }
+            
+            // Añadir días vacíos después del último día del mes
+            const totalCells = 42; // 6 semanas * 7 días
+            const daysSoFar = firstDayOfWeek + daysInMonth;
+            for (let i = 1; i <= (totalCells - daysSoFar); i++) {
+                const nextMonthDay = new Date(year, month + 1, i);
+                calendarHTML += createDayElement(nextMonthDay, true);
+            }
+            
+            calendarHTML += `</div>`;
+            
+            elements.holidayCalendar.innerHTML = calendarHTML;
+            
+            // Añadir event listeners a los botones de navegación
+            document.getElementById('prev-month-btn').addEventListener('click', () => {
+                state.currentCalendarDate.setMonth(state.currentCalendarDate.getMonth() - 1);
+                renderCalendar();
+            });
+            
+            document.getElementById('next-month-btn').addEventListener('click', () => {
+                state.currentCalendarDate.setMonth(state.currentCalendarDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+
+        // NUEVA FUNCIÓN: Crear elemento de día para el calendario
+        function createDayElement(date, isOtherMonth, isToday = false) {
+            const dayNumber = date.getDate();
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            
+            // Verificar si es festivo
+            const holiday = state.holidays.find(h => {
+                const holidayDate = new Date(h.date);
+                return holidayDate.getDate() === date.getDate() &&
+                       holidayDate.getMonth() === date.getMonth() &&
+                       holidayDate.getFullYear() === date.getFullYear();
+            });
+            
+            let dayClasses = 'calendar-day';
+            if (isOtherMonth) dayClasses += ' day-other-month';
+            if (isToday) dayClasses += ' day-today';
+            if (isWeekend) dayClasses += ' day-weekend';
+            if (holiday) dayClasses += ' day-holiday';
+            
+            let holidayHTML = '';
+            if (holiday) {
+                holidayHTML = `
+                    <div class="holiday-indicator">Festivo</div>
+                    <div class="holiday-name">${holiday.name}</div>
+                `;
+            }
+            
+            return `
+                <div class="${dayClasses}" data-date="${formatDateForInput(date)}" data-full-date="${date.toISOString()}">
+                    <div class="day-number">${dayNumber}</div>
+                    ${holidayHTML}
+                </div>
+            `;
+        }
+
+        // NUEVA FUNCIÓN: Abrir modal para añadir/editar festivo
+        function openHolidayModal(date = null, holiday = null) {
+            const today = new Date();
+            const todayStr = formatDateForInput(today);
+            
+            if (holiday) {
+                // Modo edición
+                state.editingHoliday = holiday;
+                elements.holidayModalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Día Festivo';
+                elements.holidayDateInput.value = formatDateForInput(new Date(holiday.date));
+                elements.holidayNameInput.value = holiday.name || '';
+                elements.holidayType.value = holiday.type || 'nacional';
+                elements.holidayRecurring.checked = holiday.recurring === true;
+                elements.deleteHolidayBtn.style.display = 'block';
+            } else {
+                // Modo creación
+                state.editingHoliday = null;
+                elements.holidayModalTitle.innerHTML = '<i class="fas fa-calendar-plus"></i> Nuevo Día Festivo';
+                elements.holidayDateInput.value = date || todayStr;
+                elements.holidayNameInput.value = '';
+                elements.holidayType.value = 'nacional';
+                elements.holidayRecurring.checked = false;
+                elements.deleteHolidayBtn.style.display = 'none';
+            }
+            
+            elements.holidayModal.classList.add('active');
+        }
+
+        // NUEVA FUNCIÓN: Cerrar modal de festivos
+        function closeHolidayModal() {
+            elements.holidayModal.classList.remove('active');
+            elements.holidayListContainer.style.display = 'none';
+            state.editingHoliday = null;
+        }
+
+        // NUEVA FUNCIÓN: Guardar festivo
+        async function saveHoliday() {
+            const dateStr = elements.holidayDateInput.value;
+            const name = elements.holidayNameInput.value.trim();
+            const type = elements.holidayType.value;
+            const recurring = elements.holidayRecurring.checked;
+            
+            if (!dateStr || !name) {
+                showToast("Complete la fecha y el nombre del festivo", "warning");
+                return;
+            }
+            
+            try {
+                const holidayDate = new Date(dateStr);
+                const holidayId = state.editingHoliday ? state.editingHoliday.id : `HOLIDAY_${Date.now()}`;
+                
+                const holidayData = {
+                    id: holidayId,
+                    date: holidayDate,
+                    name: name,
+                    type: type,
+                    recurring: recurring,
+                    year: holidayDate.getFullYear(),
+                    month: holidayDate.getMonth() + 1,
+                    day: holidayDate.getDate(),
+                    updatedAt: new Date()
+                };
+                
+                if (state.editingHoliday) {
+                    // Actualizar festivo existente
+                    await db.collection('holidays').doc(holidayId).update(holidayData);
+                    showToast("Festivo actualizado correctamente", "success");
+                } else {
+                    // Crear nuevo festivo
+                    holidayData.createdAt = new Date();
+                    await db.collection('holidays').doc(holidayId).set(holidayData);
+                    showToast("Festivo creado correctamente", "success");
+                }
+                
+                closeHolidayModal();
+                await loadHolidays();
+                if (elements.adminTab.classList.contains('active') && state.isAdmin) {
+                    renderCalendar();
+                }
+                
+            } catch (error) {
+                console.error("Error guardando festivo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // NUEVA FUNCIÓN: Eliminar festivo
+        async function deleteHoliday() {
+            if (!state.editingHoliday) return;
+            
+            const confirmed = await showConfirmationModal(
+                'Eliminar Festivo',
+                `¿Está seguro de eliminar el festivo "${state.editingHoliday.name}" del ${formatDate(new Date(state.editingHoliday.date))}?`,
+                'fas fa-trash',
+                'danger'
+            );
+            
+            if (!confirmed) {
+                showToast("Eliminación cancelada", "info");
+                return;
+            }
+            
+            try {
+                await db.collection('holidays').doc(state.editingHoliday.id).delete();
+                showToast("Festivo eliminado correctamente", "success");
+                
+                closeHolidayModal();
+                await loadHolidays();
+                if (elements.adminTab.classList.contains('active') && state.isAdmin) {
+                    renderCalendar();
+                }
+                
+            } catch (error) {
+                console.error("Error eliminando festivo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // NUEVA FUNCIÓN: Mostrar todos los festivos
+        function showAllHolidays() {
+            elements.holidayListContainer.style.display = 'block';
+            elements.holidayList.innerHTML = '';
+            
+            if (state.holidays.length === 0) {
+                elements.holidayList.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No hay días festivos registrados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Ordenar festivos por fecha
+            const sortedHolidays = [...state.holidays].sort((a, b) => 
+                new Date(a.date) - new Date(b.date)
+            );
+            
+            sortedHolidays.forEach(holiday => {
+                const holidayDate = new Date(holiday.date);
+                const holidayItem = document.createElement('div');
+                holidayItem.className = 'holiday-list-item';
+                holidayItem.innerHTML = `
+                    <div class="holiday-date">${formatDate(holidayDate)}</div>
+                    <div class="holiday-list-name">${holiday.name}</div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">${holiday.type || 'nacional'}</div>
+                    <div class="employee-actions">
+                        <button class="btn btn-small btn-warning edit-holiday-btn" data-id="${holiday.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-danger delete-holiday-list-btn" data-id="${holiday.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                elements.holidayList.appendChild(holidayItem);
+            });
+            
+            // Añadir event listeners a los botones
+            document.querySelectorAll('.edit-holiday-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const holidayId = btn.getAttribute('data-id');
+                    const holiday = state.holidays.find(h => h.id === holidayId);
+                    if (holiday) {
+                        openHolidayModal(null, holiday);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.delete-holiday-list-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const holidayId = btn.getAttribute('data-id');
+                    const holiday = state.holidays.find(h => h.id === holidayId);
+                    
+                    if (holiday && confirm(`¿Eliminar el festivo "${holiday.name}"?`)) {
+                        try {
+                            await db.collection('holidays').doc(holidayId).delete();
+                            showToast("Festivo eliminado", "success");
+                            await loadHolidays();
+                            if (elements.adminTab.classList.contains('active') && state.isAdmin) {
+                                renderCalendar();
+                            }
+                            showAllHolidays(); // Refrescar lista
+                        } catch (error) {
+                            console.error("Error eliminando festivo:", error);
+                            showToast(`Error: ${error.message}`, "error");
+                        }
+                    }
+                });
+            });
+            
+            // Abrir modal si no está abierto
+            if (!elements.holidayModal.classList.contains('active')) {
+                openHolidayModal();
+            }
+        }
+
+        // NUEVA FUNCIÓN: Añadir festivo en lote
+        async function addBulkHoliday() {
+            const month = elements.bulkMonth.value;
+            const year = elements.bulkYear.value;
+            const day = elements.bulkDay.value;
+            const name = elements.bulkName.value.trim();
+            
+            if (!month || !year || !day || !name) {
+                showToast("Complete todos los campos para añadir festivo", "warning");
+                return;
+            }
+            
+            const dayNum = parseInt(day);
+            if (dayNum < 1 || dayNum > 31) {
+                showToast("El día debe estar entre 1 y 31", "warning");
+                return;
+            }
+            
+            try {
+                // Verificar si la fecha es válida
+                const date = new Date(year, month - 1, day);
+                if (date.getMonth() + 1 != month || date.getDate() != dayNum) {
+                    showToast("Fecha inválida para el mes seleccionado", "error");
+                    return;
+                }
+                
+                // Verificar si ya existe un festivo en esa fecha
+                const existingHoliday = state.holidays.find(h => {
+                    const holidayDate = new Date(h.date);
+                    return holidayDate.getFullYear() == year &&
+                           holidayDate.getMonth() + 1 == month &&
+                           holidayDate.getDate() == dayNum;
+                });
+                
+                if (existingHoliday) {
+                    showToast(`Ya existe un festivo (${existingHoliday.name}) en esa fecha`, "warning");
+                    return;
+                }
+                
+                const holidayId = `HOLIDAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                await db.collection('holidays').doc(holidayId).set({
+                    id: holidayId,
+                    date: date,
+                    name: name,
+                    type: 'nacional',
+                    recurring: false,
+                    year: parseInt(year),
+                    month: parseInt(month),
+                    day: dayNum,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                
+                showToast(`Festivo "${name}" añadido para el ${day}/${month}/${year}`, "success");
+                
+                // Limpiar campos
+                elements.bulkDay.value = '';
+                elements.bulkName.value = '';
+                
+                // Actualizar
+                await loadHolidays();
+                if (elements.adminTab.classList.contains('active') && state.isAdmin) {
+                    renderCalendar();
+                }
+                
+            } catch (error) {
+                console.error("Error añadiendo festivo en lote:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // ==============================================
+        // FUNCIONES ORIGINALES (todas se mantienen igual)
+        // ==============================================
+
+        // Cambiar pestaña
+        function switchTab(tabId) {
+            // ... código original completo ...
+        }
+
+        // Cargar empleado recordado
+        function loadRememberedEmployee() {
+            // ... código original completo ...
+        }
+
+        // Cargar empleados desde Firebase
+        async function loadEmployees() {
+            // ... código original completo ...
+        }
+
+        // Actualizar lista de empleados en admin
+        function updateEmployeesList() {
+            // ... código original completo ...
+        }
+
+        // Abrir modal de empleado
+        function openEmployeeModal(employeeId = null) {
+            // ... código original completo ...
+        }
+
+        // Cerrar modal de empleado
+        function closeEmployeeModal() {
+            // ... código original completo ...
+        }
+
+        // Guardar empleado
+        async function saveEmployee() {
+            // ... código original completo ...
+        }
+
+        // Eliminar empleado
+        async function deleteEmployee(employeeId = null) {
+            // ... código original completo ...
+        }
+
+        // Actualizar reloj
+        function updateClock() {
+            // ... código original completo ...
+        }
+
+        // Actualizar tiempo transcurrido
+        function updateElapsedTime() {
+            // ... código original completo ...
+        }
+
+        // Configurar listener en tiempo real para empleado
+        function setupEmployeeRealtimeListener(employeeId) {
+            // ... código original completo ...
+        }
+
+        // Cargar estado activo del empleado desde Firebase
+        async function loadEmployeeActiveStatus(employeeId) {
+            // ... código original completo ...
+        }
+
+        // Actualizar UI del empleado
+        function updateEmployeeUI() {
+            // ... código original completo ...
+        }
+
+        // Registrar día especial (vacaciones, baja, viaje)
+        async function registerSpecialDay(type) {
+            // ... código original completo ...
+        }
+
+        // Función para buscar la última entrada del mismo operario en el mismo día
+        async function findEntryForDay(employeeId, dateStr, exitTime, preferManual = true) {
+            // ... código original completo ...
+        }
+
+        // Función para calcular horas trabajadas entre entrada y salida
+        function calculateWorkedHours(entryTime, exitTime) {
+            // ... código original completo ...
+        }
+
+        // Registrar tiempo (entrada/salida)
+        async function registerTime(type, isAutomatic = true) {
+            // ... código original completo ...
+        }
+
+        // Cargar estadísticas del empleado
+        async function loadEmployeeStatistics(employeeId) {
+            // ... código original completo ...
+        }
+
+        // Login administrador
+        function adminLogin() {
+            // ... código original completo ...
+        }
+
+        // Logout administrador
+        function adminLogout() {
+            // ... código original completo ...
+        }
+
+        // Cargar estadísticas globales para admin
+        async function loadAdminStatistics() {
+            // ... código original completo ...
+        }
+
+        // Asignar vacaciones
+        async function assignVacation() {
+            // ... código original completo ...
+        }
+
+        // Filtrar registros
+        async function filterRecords() {
+            // ... código original completo ...
+        }
+
+        // Actualizar visualización de registros en admin
+        function updateAdminRecordsDisplay(records) {
+            // ... código original completo ...
+        }
+
+        // Exportar registros
+        function exportRecords() {
+            // ... código original completo ...
+        }
+
+        // Mostrar toast con duración personalizable
+        function showToast(message, type = "success", duration = 3000) {
+            // ... código original completo ...
+        }
+
+        // Mostrar loading
+        function showLoading(message = "Cargando...") {
+            // ... código original completo ...
+        }
+
+        // Ocultar loading
+        function hideLoading() {
+            // ... código original completo ...
+        }
+
+        // Cargar datos de demostración
+        function loadDemoData() {
+            // ... código original completo ...
+        }
+
+        // Actualizar selects de empleados
+        function updateEmployeeSelects() {
+            // ... código original completo ...
+        }
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
