@@ -1,0 +1,4437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Jornada Laboral - IRISNOR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #17a2b8;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --vacation: #3498db;
+            --sick: #9b59b6;
+            --travel: #f39c12;
+            --normal-hours: #27ae60;
+            --extra-hours: #e67e22;
+            --weekend-extra: #9b59b6;
+            --holiday: #e74c3c;
+            --diet: #2ecc71;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            max-width: 100%;
+            overflow-x: hidden;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 90px;
+            z-index: 90;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+            background-color: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            animation: fadeIn 0.5s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--secondary);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #219653;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-info {
+            background-color: var(--info);
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
+        }
+
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .btn-icon {
+            width: auto;
+            padding: 10px 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .select-employee {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select-employee select {
+            flex: 1;
+        }
+
+        .remember-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .remember-check input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .clock-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .clock-display {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid var(--secondary);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
+        }
+
+        .action-buttons {
+            margin: 25px 0;
+        }
+
+        .elapsed-time {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--success);
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(39, 174, 96, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+        }
+
+        .status-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .status-dot.active {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+
+        .status-dot.inactive {
+            background-color: #bdc3c7;
+        }
+
+        .status-text {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 30px auto;
+        }
+
+        .employees-list {
+            margin-top: 20px;
+        }
+
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background-color: white;
+            transition: all 0.3s;
+        }
+
+        .employee-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .employee-info h4 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .employee-info p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .vacation-days {
+            background-color: var(--vacation);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-section select, .filter-section input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .filter-type-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .filter-type-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            animation: modalAppear 0.3s;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .special-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .special-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            gap: 15px;
+            text-align: left;
+        }
+
+        .special-btn i {
+            font-size: 1.8rem;
+        }
+
+        .special-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .special-btn.active {
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px currentColor;
+        }
+
+        .special-btn .badge {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        .vacation-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .vacation-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #1c6ea4);
+        }
+
+        .sick-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .sick-btn:hover {
+            background: linear-gradient(135deg, #8e44ad, #7d3c98);
+        }
+
+        .travel-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .travel-btn:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .diet-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .diet-btn:hover {
+            background: linear-gradient(135deg, #27ae60, #219653);
+        }
+
+        .vacation-btn.active {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+        }
+
+        .sick-btn.active {
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.5);
+        }
+
+        .travel-btn.active {
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.5);
+        }
+
+        .diet-btn.active {
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.5);
+        }
+
+        .special-btn.selected::after {
+            content: ' ✓';
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s;
+            max-width: 400px;
+        }
+
+        .toast.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+        }
+
+        .toast.warning {
+            background-color: var(--warning);
+        }
+
+        .toast.info {
+            background-color: var(--info);
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.8rem;
+            z-index: 80;
+        }
+
+        .refresh-button {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #ddd;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+            opacity: 0.5;
+        }
+
+        .admin-stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .records-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .records-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .records-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .records-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 4px;
+        }
+
+        .records-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .records-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .records-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            background-color: white;
+        }
+
+        .records-table tr:hover td {
+            background-color: #f8f9fa;
+        }
+
+        .record-type {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .record-type.entry {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+
+        .record-type.exit {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .record-type.vacation {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--vacation);
+        }
+
+        .record-type.sick {
+            background-color: rgba(155, 89, 182, 0.1);
+            color: var(--sick);
+        }
+
+        .record-type.travel {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--travel);
+        }
+
+        .record-type.diet {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--diet);
+        }
+
+        .holiday-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            background-color: white;
+            transition: all 0.3s;
+        }
+
+        .holiday-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .holiday-date {
+            background-color: var(--holiday);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .holiday-description {
+            flex: 1;
+            margin-left: 15px;
+            color: var(--dark);
+        }
+
+        .holiday-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .holiday-list {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .edit-vacation-summary {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .vacation-history {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .vacation-year-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .vacation-year-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .year-label {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .days-count {
+            background-color: var(--vacation);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .days-count.negative {
+            background-color: var(--danger);
+        }
+
+        .diet-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 12px 15px;
+            background-color: rgba(46, 204, 113, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .diet-checkbox input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .diet-checkbox label {
+            font-weight: 600;
+            color: var(--diet);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .diet-checkbox .badge {
+            background-color: var(--diet);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .filter-section {
+                flex-direction: column;
+            }
+            
+            .clock-display {
+                font-size: 2.2rem;
+            }
+            
+            .special-btn {
+                font-size: 1rem;
+                padding: 15px;
+            }
+            
+            .records-table {
+                font-size: 0.8rem;
+            }
+            
+            .records-table th,
+            .records-table td {
+                padding: 8px 6px;
+            }
+            
+            .holiday-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .holiday-actions {
+                align-self: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .tab {
+                padding: 12px 5px;
+                font-size: 0.9rem;
+            }
+            
+            .clock-display {
+                font-size: 1.8rem;
+            }
+            
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            .employee-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .employee-actions {
+                align-self: flex-end;
+            }
+            
+            .admin-stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-types {
+                flex-direction: column;
+            }
+            
+            .records-table {
+                font-size: 0.75rem;
+            }
+            
+            .records-table th,
+            .records-table td {
+                padding: 6px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-clock"></i> Sistema de Jornada Laboral</h1>
+        <p>IRISNOR - Registro de fichajes y gestión de empleados</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" data-tab="operator">Operario</div>
+        <div class="tab" data-tab="admin">Administrador</div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loading-text">Conectando con el servidor...</p>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Operator Tab -->
+    <div class="tab-content active" id="operator-tab">
+        <!-- Employee selection -->
+        <div class="card">
+            <h2 class="card-title">
+                <span><i class="fas fa-user"></i> Selección de Operario</span>
+                <button class="refresh-button" id="refresh-employees-btn" title="Actualizar lista">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </h2>
+            <div class="form-group">
+                <label for="employee-select">Operario:</label>
+                <div class="select-employee">
+                    <select id="employee-select" class="form-control">
+                        <option value="">Seleccione un operario</option>
+                    </select>
+                </div>
+            </div>
+            <div class="remember-check">
+                <input type="checkbox" id="remember-employee">
+                <label for="remember-employee">Recordar mi selección</label>
+            </div>
+        </div>
+
+        <!-- Clock and status -->
+        <div class="card">
+            <h2 class="card-title">
+                <span><i class="fas fa-clock"></i> Jornada Actual</span>
+                <button class="refresh-button" id="refresh-status-btn" title="Actualizar estado">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </h2>
+            
+            <div class="clock-section">
+                <div class="clock-display" id="current-time">00:00:00</div>
+                
+                <!-- Elapsed time -->
+                <div class="elapsed-time" id="elapsed-time" style="display: none;">
+                    Tiempo transcurrido: <span id="elapsed-hours">00</span>:<span id="elapsed-minutes">00</span>:<span id="elapsed-seconds">00</span>
+                </div>
+                
+                <!-- Status indicator -->
+                <div class="status-indicator">
+                    <div class="status-dot inactive" id="status-dot"></div>
+                    <div class="status-text" id="status-text">Seleccione un operario</div>
+                </div>
+                
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="entry-btn" disabled>
+                            <i class="fas fa-sign-in-alt"></i> Fichar Entrada
+                        </button>
+                        <button class="btn btn-danger" id="exit-btn" disabled>
+                            <i class="fas fa-sign-out-alt"></i> Fichar Salida
+                        </button>
+                    </div>
+                    
+                    <!-- Casilla de dieta para fichaje automático -->
+                    <div class="diet-checkbox">
+                        <input type="checkbox" id="auto-diet-checkbox">
+                        <label for="auto-diet-checkbox">
+                            <i class="fas fa-utensils"></i> Incluir dieta en este fichaje
+                        </label>
+                        <span class="badge">+1€</span>
+                    </div>
+                    
+                    <!-- Manual time registration for work days -->
+                    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #ddd;">
+                        <h3 style="margin-bottom: 15px; color: var(--primary);">
+                            <i class="fas fa-calendar-plus"></i> Fichaje Manual de Jornada
+                        </h3>
+                        <div style="margin-bottom: 10px; color: #7f8c8d; font-size: 0.9rem;">
+                            Para registrar fichajes en días anteriores o posteriores que no pudo realizar automáticamente.
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="manual-work-date">Fecha del fichaje:</label>
+                            <input type="date" id="manual-work-date" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="manual-work-time">Hora del fichaje:</label>
+                            <input type="time" id="manual-work-time" class="form-control" step="1">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-info" id="manual-entry-btn" disabled>
+                                <i class="fas fa-sign-in-alt"></i> Entrada Manual
+                            </button>
+                            <button class="btn btn-warning" id="manual-exit-btn" disabled>
+                                <i class="fas fa-sign-out-alt"></i> Salida Manual
+                            </button>
+                        </div>
+                        
+                        <!-- Casilla de dieta para fichaje manual -->
+                        <div class="diet-checkbox">
+                            <input type="checkbox" id="manual-diet-checkbox">
+                            <label for="manual-diet-checkbox">
+                                <i class="fas fa-utensils"></i> Incluir dieta en este fichaje manual
+                            </label>
+                            <span class="badge">+1€</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special buttons -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-fingerprint"></i> Registros Especiales</h2>
+            
+            <!-- Manual date/time selection for special days -->
+            <div class="form-group">
+                <label for="special-date">Fecha del registro especial:</label>
+                <input type="date" id="special-date" class="form-control">
+            </div>
+            
+            <!-- Special buttons -->
+            <div class="special-buttons">
+                <button class="special-btn vacation-btn" id="vacation-btn" data-type="vacation" disabled>
+                    <i class="fas fa-umbrella-beach"></i>
+                    <span>Vacaciones</span>
+                    <span class="badge" id="vacation-badge">0 días</span>
+                </button>
+                
+                <button class="special-btn sick-btn" id="sick-btn" data-type="sick" disabled>
+                    <i class="fas fa-hospital"></i>
+                    <span>Baja Laboral</span>
+                </button>
+                
+                <button class="special-btn travel-btn" id="travel-btn" data-type="travel" disabled>
+                    <i class="fas fa-plane"></i>
+                    <span>Viaje de Trabajo</span>
+                    <span class="badge">+8h automático</span>
+                </button>
+                
+                <!-- Nuevo botón de dieta -->
+                <button class="special-btn diet-btn" id="diet-btn" data-type="diet" disabled>
+                    <i class="fas fa-utensils"></i>
+                    <span>Registrar Dieta</span>
+                    <span class="badge" id="diet-badge">+1€</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-chart-bar"></i> Estadísticas</h2>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-label">Horas Hoy</div>
+                    <div class="stat-value" id="hours-today">00:00:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Horas Mes</div>
+                    <div class="stat-value" id="hours-month">00:00:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Vacaciones Pend.</div>
+                    <div class="stat-value" id="vacation-pending">0d</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Días Trabajados</div>
+                    <div class="stat-value" id="days-worked">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tab -->
+    <div class="tab-content" id="admin-tab">
+        <!-- Login form -->
+        <div class="card login-form" id="admin-login">
+            <h2 class="card-title"><i class="fas fa-lock"></i> Acceso Administrador</h2>
+            <div class="form-group">
+                <label for="admin-user">Usuario:</label>
+                <input type="text" id="admin-user" class="form-control" placeholder="Ingrese usuario">
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Contraseña:</label>
+                <input type="password" id="admin-password" class="form-control" placeholder="Ingrese contraseña">
+            </div>
+            <button class="btn" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            </button>
+        </div>
+
+        <!-- Admin panel (hidden by default) -->
+        <div id="admin-panel" style="display: none;">
+            <!-- Employee management -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span><i class="fas fa-users"></i> Gestión de Empleados</span>
+                    <div>
+                        <button class="btn btn-small" id="add-employee-btn">
+                            <i class="fas fa-user-plus"></i> Nuevo
+                        </button>
+                    </div>
+                </h2>
+                
+                <div class="employees-list" id="employees-list">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No hay empleados registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vacation assignment -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-umbrella-beach"></i> Asignación de Vacaciones</h2>
+                <div class="form-group">
+                    <label for="vacation-employee">Empleado:</label>
+                    <select id="vacation-employee" class="form-control">
+                        <option value="">Seleccione empleado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vacation-year">Año:</label>
+                    <select id="vacation-year" class="form-control">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                        <option value="2031">2031</option>
+                        <option value="2032">2032</option>
+                        <option value="2033">2033</option>
+                        <option value="2034">2034</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vacation-days">Días de vacaciones:</label>
+                    <input type="number" id="vacation-days" class="form-control" min="0" max="365" value="22">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="assign-vacation-btn">
+                        <i class="fas fa-save"></i> Asignar/Actualizar Vacaciones
+                    </button>
+                    <button class="btn btn-warning" id="edit-vacation-btn">
+                        <i class="fas fa-edit"></i> Editar Vacaciones
+                    </button>
+                </div>
+            </div>
+
+            <!-- Holidays management -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-calendar-day"></i> Gestión de Días Festivos</h2>
+                <div style="margin-bottom: 15px; color: #7f8c8d; font-size: 0.9rem;">
+                    Los días festivos se consideran igual que fines de semana para el cálculo de horas (todas las horas son extra de fin de semana).
+                </div>
+                
+                <div class="form-group">
+                    <label for="holiday-year">Año:</label>
+                    <select id="holiday-year" class="form-control">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                        <option value="2031">2031</option>
+                        <option value="2032">2032</option>
+                        <option value="2033">2033</option>
+                        <option value="2034">2034</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="holiday-date">Fecha del festivo:</label>
+                    <input type="date" id="holiday-date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="holiday-description">Descripción (opcional):</label>
+                    <input type="text" id="holiday-description" class="form-control" placeholder="Ej: Navidad, Año Nuevo, etc.">
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-warning" id="add-holiday-btn">
+                        <i class="fas fa-calendar-plus"></i> Agregar Festivo
+                    </button>
+                    <button class="btn btn-info" id="refresh-holidays-btn">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                
+                <!-- Holidays list -->
+                <div class="holiday-list" id="holidays-list">
+                    <div class="empty-state">
+                        <i class="fas fa-calendar"></i>
+                        <p>No hay días festivos configurados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Records view -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-search"></i> Consulta de Registros</h2>
+                <div class="filter-section">
+                    <select id="filter-employee" class="form-control">
+                        <option value="">Todos los empleados</option>
+                    </select>
+                    <select id="filter-year" class="form-control">
+                        <option value="">Todos los años</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                        <option value="2031">2031</option>
+                        <option value="2032">2032</option>
+                        <option value="2033">2033</option>
+                        <option value="2034">2034</option>
+                    </select>
+                    <select id="filter-month" class="form-control">
+                        <option value="">Todos los meses</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                    <input type="date" id="filter-start" class="form-control" placeholder="Fecha inicio">
+                    <input type="date" id="filter-end" class="form-control" placeholder="Fecha fin">
+                    
+                    <!-- Filter by type -->
+                    <div class="filter-types">
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-entry" checked> Entrada
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-exit" checked> Salida
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-vacation" checked> Vacaciones
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-sick" checked> Baja Laboral
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-travel" checked> Viaje
+                        </label>
+                        <label class="filter-type-checkbox">
+                            <input type="checkbox" id="filter-diet" checked> Dietas
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" id="filter-btn">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button class="btn btn-info" id="export-btn">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+                
+                <!-- Records scroll container -->
+                <div class="records-scroll-container" id="admin-records-container">
+                    <div id="admin-records">
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Aplica filtros para ver registros</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Estadísticas Generales</h3>
+                <div class="admin-stats-container" id="admin-stats-container">
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Hoy</div>
+                        <div class="stat-value" id="total-hours-today">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Mes</div>
+                        <div class="stat-value" id="total-hours-month">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Vacaciones Usadas</div>
+                        <div class="stat-value" id="used-vacation">0d</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Bajas Laborales</div>
+                        <div class="stat-value" id="sick-days">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Días Viaje</div>
+                        <div class="stat-value" id="travel-days">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Horas Viaje</div>
+                        <div class="stat-value" id="travel-hours">00:00:00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Días Trabajados</div>
+                        <div class="stat-value" id="total-days-worked">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Empleados</div>
+                        <div class="stat-value" id="total-employees">0</div>
+                    </div>
+                    <!-- Estadísticas de clasificación de horas -->
+                    <div class="stat-box" style="border-left: 4px solid var(--normal-hours);">
+                        <div class="stat-label">Horas Normales</div>
+                        <div class="stat-value" id="normal-hours">00:00:00</div>
+                    </div>
+                    <div class="stat-box" style="border-left: 4px solid var(--extra-hours);">
+                        <div class="stat-label">Horas Extra Diarias</div>
+                        <div class="stat-value" id="extra-hours">00:00:00</div>
+                    </div>
+                    <div class="stat-box" style="border-left: 4px solid var(--weekend-extra);">
+                        <div class="stat-label">Horas Extra Fin Semana</div>
+                        <div class="stat-value" id="weekend-extra-hours">00:00:00</div>
+                    </div>
+                    <!-- Nuevas estadísticas de dietas -->
+                    <div class="stat-box" style="border-left: 4px solid var(--diet);">
+                        <div class="stat-label">Dietas Registradas</div>
+                        <div class="stat-value" id="total-diets">0</div>
+                    </div>
+                    <div class="stat-box" style="border-left: 4px solid var(--diet);">
+                        <div class="stat-label">Valor Dietas</div>
+                        <div class="stat-value" id="total-diet-value">0€</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logout button -->
+            <div class="card" style="margin-top: 20px;">
+                <button class="btn btn-warning" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add/Edit employee modal -->
+    <div class="modal" id="employee-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"><i class="fas fa-user-plus"></i> Nuevo Empleado</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="employee-name">Nombre completo:</label>
+                    <input type="text" id="employee-name" class="form-control" placeholder="Ej: Juan Pérez García">
+                </div>
+                <div class="form-group">
+                    <label for="employee-department">Departamento (opcional):</label>
+                    <input type="text" id="employee-department" class="form-control" placeholder="Ej: Producción, Administración...">
+                </div>
+                <div id="employee-id-display" style="display: none; margin-bottom: 15px;">
+                    <p><strong>ID del empleado:</strong> <span id="employee-id-text"></span></p>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="save-employee-btn">Guardar Empleado</button>
+                    <button class="btn btn-danger" id="delete-employee-btn" style="display: none;">Eliminar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para edición de vacaciones -->
+    <div class="modal" id="edit-vacation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Vacaciones Asignadas</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit-vacation-employee">Empleado:</label>
+                    <select id="edit-vacation-employee" class="form-control">
+                        <option value="">Seleccione empleado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-vacation-year">Año:</label>
+                    <select id="edit-vacation-year" class="form-control">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                        <option value="2031">2031</option>
+                        <option value="2032">2032</option>
+                        <option value="2033">2033</option>
+                        <option value="2034">2034</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-vacation-days">Días de vacaciones asignados:</label>
+                    <input type="number" id="edit-vacation-days" class="form-control" min="-365" max="365" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="edit-vacation-notes">Notas/Comentarios:</label>
+                    <textarea id="edit-vacation-notes" class="form-control" rows="3" placeholder="Notas sobre la asignación de vacaciones..."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="save-vacation-edit-btn">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                    <button class="btn btn-danger" id="delete-vacation-assignment-btn" style="display: none;">
+                        <i class="fas fa-trash"></i> Eliminar Asignación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Sistema de fichaje IRISNOR &copy; 2026 - <span id="firebase-status">Conectando...</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Main Application Script -->
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPYnqZuduPYVPu8HxvqDG0PX-Gft8MOE0",
+            authDomain: "fichaje-ded3c.firebaseapp.com",
+            projectId: "fichaje-ded3c",
+            storageBucket: "fichaje-ded3c.firebasestorage.app",
+            messagingSenderId: "920545104442",
+            appId: "1:920545104442:web:48195df317ad5ac1ff9b03",
+            measurementId: "G-DQ97WCF7WX"
+        };
+
+        // Estado de la aplicación
+        const state = {
+            currentEmployee: null,
+            employees: [],
+            holidays: [],
+            isAdmin: false,
+            currentTime: new Date(),
+            firebaseConnected: false,
+            elapsedInterval: null,
+            editingEmployeeId: null,
+            activeEntry: null,
+            realtimeListeners: {}
+        };
+
+        // Inicializar Firebase
+        let app, db;
+        
+        // DOM Elements
+        const elements = {
+            // Tabs
+            operatorTab: document.getElementById('operator-tab'),
+            adminTab: document.getElementById('admin-tab'),
+            tabs: document.querySelectorAll('.tab'),
+            
+            // Operator tab
+            employeeSelect: document.getElementById('employee-select'),
+            rememberEmployee: document.getElementById('remember-employee'),
+            refreshEmployeesBtn: document.getElementById('refresh-employees-btn'),
+            refreshStatusBtn: document.getElementById('refresh-status-btn'),
+            currentTime: document.getElementById('current-time'),
+            elapsedTime: document.getElementById('elapsed-time'),
+            elapsedHours: document.getElementById('elapsed-hours'),
+            elapsedMinutes: document.getElementById('elapsed-minutes'),
+            elapsedSeconds: document.getElementById('elapsed-seconds'),
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            manualWorkDate: document.getElementById('manual-work-date'),
+            manualWorkTime: document.getElementById('manual-work-time'),
+            manualEntryBtn: document.getElementById('manual-entry-btn'),
+            manualExitBtn: document.getElementById('manual-exit-btn'),
+            specialDate: document.getElementById('special-date'),
+            vacationBtn: document.getElementById('vacation-btn'),
+            sickBtn: document.getElementById('sick-btn'),
+            travelBtn: document.getElementById('travel-btn'),
+            dietBtn: document.getElementById('diet-btn'),
+            vacationBadge: document.getElementById('vacation-badge'),
+            dietBadge: document.getElementById('diet-badge'),
+            entryBtn: document.getElementById('entry-btn'),
+            exitBtn: document.getElementById('exit-btn'),
+            hoursToday: document.getElementById('hours-today'),
+            hoursMonth: document.getElementById('hours-month'),
+            vacationPending: document.getElementById('vacation-pending'),
+            daysWorked: document.getElementById('days-worked'),
+            
+            // Elementos para dietas
+            autoDietCheckbox: document.getElementById('auto-diet-checkbox'),
+            manualDietCheckbox: document.getElementById('manual-diet-checkbox'),
+            
+            // Admin tab
+            adminLogin: document.getElementById('admin-login'),
+            adminUser: document.getElementById('admin-user'),
+            adminPassword: document.getElementById('admin-password'),
+            loginBtn: document.getElementById('login-btn'),
+            adminPanel: document.getElementById('admin-panel'),
+            addEmployeeBtn: document.getElementById('add-employee-btn'),
+            employeesList: document.getElementById('employees-list'),
+            vacationEmployee: document.getElementById('vacation-employee'),
+            vacationYear: document.getElementById('vacation-year'),
+            vacationDays: document.getElementById('vacation-days'),
+            assignVacationBtn: document.getElementById('assign-vacation-btn'),
+            editVacationBtn: document.getElementById('edit-vacation-btn'),
+            filterEmployee: document.getElementById('filter-employee'),
+            filterYear: document.getElementById('filter-year'),
+            filterMonth: document.getElementById('filter-month'),
+            filterStart: document.getElementById('filter-start'),
+            filterEnd: document.getElementById('filter-end'),
+            filterEntry: document.getElementById('filter-entry'),
+            filterExit: document.getElementById('filter-exit'),
+            filterVacation: document.getElementById('filter-vacation'),
+            filterSick: document.getElementById('filter-sick'),
+            filterTravel: document.getElementById('filter-travel'),
+            filterDiet: document.getElementById('filter-diet'),
+            filterBtn: document.getElementById('filter-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            adminRecordsContainer: document.getElementById('admin-records-container'),
+            adminRecords: document.getElementById('admin-records'),
+            totalHoursToday: document.getElementById('total-hours-today'),
+            totalHoursMonth: document.getElementById('total-hours-month'),
+            usedVacation: document.getElementById('used-vacation'),
+            travelDays: document.getElementById('travel-days'),
+            travelHours: document.getElementById('travel-hours'),
+            sickDays: document.getElementById('sick-days'),
+            totalDaysWorked: document.getElementById('total-days-worked'),
+            totalEmployees: document.getElementById('total-employees'),
+            logoutBtn: document.getElementById('logout-btn'),
+            
+            // Elementos para clasificación de horas
+            normalHours: document.getElementById('normal-hours'),
+            extraHours: document.getElementById('extra-hours'),
+            weekendExtraHours: document.getElementById('weekend-extra-hours'),
+            
+            // Elementos para estadísticas de dietas
+            totalDiets: document.getElementById('total-diets'),
+            totalDietValue: document.getElementById('total-diet-value'),
+            
+            // Elementos para gestión de festivos
+            holidayYear: document.getElementById('holiday-year'),
+            holidayDate: document.getElementById('holiday-date'),
+            holidayDescription: document.getElementById('holiday-description'),
+            addHolidayBtn: document.getElementById('add-holiday-btn'),
+            refreshHolidaysBtn: document.getElementById('refresh-holidays-btn'),
+            holidaysList: document.getElementById('holidays-list'),
+            
+            // Modals
+            employeeModal: document.getElementById('employee-modal'),
+            editVacationModal: document.getElementById('edit-vacation-modal'),
+            closeModalButtons: document.querySelectorAll('.close-modal'),
+            modalTitle: document.getElementById('modal-title'),
+            employeeName: document.getElementById('employee-name'),
+            employeeDepartment: document.getElementById('employee-department'),
+            employeeIdDisplay: document.getElementById('employee-id-display'),
+            employeeIdText: document.getElementById('employee-id-text'),
+            saveEmployeeBtn: document.getElementById('save-employee-btn'),
+            deleteEmployeeBtn: document.getElementById('delete-employee-btn'),
+            
+            // Elementos del modal de edición de vacaciones
+            editVacationEmployee: document.getElementById('edit-vacation-employee'),
+            editVacationYear: document.getElementById('edit-vacation-year'),
+            editVacationDays: document.getElementById('edit-vacation-days'),
+            editVacationNotes: document.getElementById('edit-vacation-notes'),
+            saveVacationEditBtn: document.getElementById('save-vacation-edit-btn'),
+            deleteVacationAssignmentBtn: document.getElementById('delete-vacation-assignment-btn'),
+            
+            // Others
+            loading: document.getElementById('loading'),
+            loadingText: document.getElementById('loading-text'),
+            toast: document.getElementById('toast'),
+            firebaseStatus: document.getElementById('firebase-status')
+        };
+
+        // Función para verificar si una fecha es festivo
+        function isHoliday(date) {
+            if (!state.holidays || state.holidays.length === 0) return false;
+            
+            const dateStr = date.toISOString().split('T')[0];
+            return state.holidays.some(holiday => holiday.date === dateStr);
+        }
+
+        // Función para clasificar las horas trabajadas (incluye festivos)
+        function classifyHours(hoursWorked, date, type) {
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isHolidayDay = isHoliday(date);
+            const isTravel = type === 'travel';
+            
+            // Si es festivo, se considera igual que fin de semana
+            const isSpecialDay = isWeekend || isHolidayDay;
+            
+            // Si es viaje de trabajo, no genera horas extra
+            if (isTravel) {
+                if (isSpecialDay) {
+                    return { normal: 0, extra: 0, weekendExtra: 0 };
+                } else {
+                    return { normal: 8, extra: 0, weekendExtra: 0 };
+                }
+            }
+            
+            // Si no es viaje, clasificar normalmente
+            if (isSpecialDay) {
+                return { normal: 0, extra: 0, weekendExtra: hoursWorked };
+            } else {
+                const normal = Math.min(hoursWorked, 8);
+                const extra = Math.max(0, hoursWorked - 8);
+                return { normal, extra, weekendExtra: 0 };
+            }
+        }
+
+        // Función para formatear horas decimales a HH:MM:SS
+        function formatHours(decimalHours) {
+            if (decimalHours === undefined || decimalHours === null || isNaN(decimalHours)) {
+                return "00:00:00";
+            }
+            
+            const hours = parseFloat(decimalHours);
+            if (isNaN(hours)) {
+                return "00:00:00";
+            }
+            
+            const absoluteHours = Math.abs(hours);
+            const totalSeconds = Math.round(absoluteHours * 3600);
+            const hrs = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${hrs.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Función para crear fecha a partir de string de fecha y hora
+        function createDateTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return new Date();
+            
+            try {
+                const dateTimeStr = `${dateStr}T${timeStr}`;
+                const date = new Date(dateTimeStr);
+                
+                if (isNaN(date.getTime())) {
+                    console.warn("Fecha/hora inválida, usando fecha actual");
+                    return new Date();
+                }
+                
+                return date;
+            } catch (error) {
+                console.error("Error creando fecha:", error);
+                return new Date();
+            }
+        }
+
+        // Función para convertir Timestamp de Firestore a Date
+        function convertTimestampToDate(timestamp) {
+            if (!timestamp) return new Date();
+            
+            try {
+                if (timestamp && timestamp.toDate) {
+                    return timestamp.toDate();
+                } else if (typeof timestamp === 'string') {
+                    return new Date(timestamp);
+                } else if (timestamp instanceof Date) {
+                    return timestamp;
+                } else {
+                    return new Date(timestamp);
+                }
+            } catch (error) {
+                console.error("Error convirtiendo timestamp:", error);
+                return new Date();
+            }
+        }
+
+        // Función para mostrar modal de confirmación personalizado
+        function showConfirmationModal(title, message, icon, type) {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 400px;">
+                        <div class="modal-header" style="background-color: ${getColorByType(type)};">
+                            <h3><i class="${icon}"></i> ${title}</h3>
+                            <button class="close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom: 20px; font-size: 1.1rem;">${message}</p>
+                            <div class="btn-group">
+                                <button class="btn btn-danger" id="confirm-cancel">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                                <button class="btn btn-success" id="confirm-ok">
+                                    <i class="fas fa-check"></i> Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                const closeBtn = modal.querySelector('.close-modal');
+                const cancelBtn = modal.querySelector('#confirm-cancel');
+                const confirmBtn = modal.querySelector('#confirm-ok');
+                
+                const closeModal = (result) => {
+                    modal.remove();
+                    resolve(result);
+                };
+                
+                closeBtn.addEventListener('click', () => closeModal(false));
+                cancelBtn.addEventListener('click', () => closeModal(false));
+                confirmBtn.addEventListener('click', () => closeModal(true));
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal(false);
+                });
+            });
+        }
+
+        // Obtener color por tipo de registro especial
+        function getColorByType(type) {
+            switch(type) {
+                case 'vacation': return 'var(--vacation)';
+                case 'sick': return 'var(--sick)';
+                case 'travel': return 'var(--travel)';
+                case 'diet': return 'var(--diet)';
+                case 'entry': return 'var(--success)';
+                case 'exit': return 'var(--danger)';
+                case 'holiday': return 'var(--holiday)';
+                default: return 'var(--primary)';
+            }
+        }
+
+        // Función para formatear la hora con segundos (hh:mm:ss)
+        function formatTimeWithSeconds(date) {
+            if (!date) return '00:00:00';
+            
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Función para formatear fecha (dd/mm/aaaa)
+        function formatDate(date) {
+            if (!date) return '';
+            
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${day}/${month}/${year}`;
+        }
+
+        // Inicializar la aplicación
+        async function initApp() {
+            showLoading("Inicializando sistema...");
+            
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error("Firebase no se cargó correctamente");
+                }
+                
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                console.log("✅ Firebase inicializado");
+                
+                await testFirestoreConnection();
+                
+                state.firebaseConnected = true;
+                elements.firebaseStatus.textContent = "Conectado a Firebase";
+                elements.firebaseStatus.style.color = "#27ae60";
+                
+                setDefaultDates();
+                loadRememberedEmployee();
+                await loadEmployees();
+                await loadHolidays();
+                
+                updateClock();
+                setInterval(updateClock, 1000);
+                
+                setupEventListeners();
+                
+                updateEmployeeUI();
+                
+                hideLoading();
+                showToast("Sistema inicializado correctamente", "success");
+                
+            } catch (error) {
+                console.error("Error inicializando la aplicación:", error);
+                elements.firebaseStatus.textContent = "Error de conexión";
+                elements.firebaseStatus.style.color = "#e74c3c";
+                hideLoading();
+                showToast(`Error: ${error.message}. Usando modo local.`, "error");
+                loadDemoData();
+            }
+        }
+
+        // Configurar fechas por defecto
+        function setDefaultDates() {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds}`;
+            
+            elements.manualWorkDate.value = todayStr;
+            elements.manualWorkTime.value = timeStr;
+            elements.specialDate.value = todayStr;
+            elements.holidayDate.value = todayStr;
+        }
+
+        // Probar conexión a Firestore
+        async function testFirestoreConnection() {
+            try {
+                const testRef = db.collection('test_connection');
+                const querySnapshot = await testRef.limit(1).get();
+                console.log("✅ Conexión a Firestore exitosa");
+                return true;
+            } catch (error) {
+                console.error("❌ Error de conexión a Firestore:", error);
+                return true;
+            }
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Tabs
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Selección de empleado
+            elements.employeeSelect.addEventListener('change', async function() {
+                const employeeId = this.value;
+                
+                if (state.currentEmployee && state.currentEmployee.id) {
+                    if (state.realtimeListeners[state.currentEmployee.id]) {
+                        state.realtimeListeners[state.currentEmployee.id]();
+                        delete state.realtimeListeners[state.currentEmployee.id];
+                    }
+                    
+                    if (state.elapsedInterval) {
+                        clearInterval(state.elapsedInterval);
+                        state.elapsedInterval = null;
+                    }
+                }
+                
+                if (employeeId) {
+                    const employee = state.employees.find(emp => emp.id === employeeId);
+                    if (employee) {
+                        state.currentEmployee = employee;
+                        
+                        setupEmployeeRealtimeListener(employeeId);
+                        
+                        await loadEmployeeActiveStatus(employeeId);
+                        
+                        updateEmployeeUI();
+                        await loadEmployeeStatistics(employeeId);
+                        
+                        if (elements.rememberEmployee.checked) {
+                            localStorage.setItem('rememberedEmployee', employeeId);
+                        }
+                    }
+                } else {
+                    state.currentEmployee = null;
+                    state.activeEntry = null;
+                    
+                    updateEmployeeUI();
+                }
+            });
+
+            // Checkbox recordar empleado
+            elements.rememberEmployee.addEventListener('change', function() {
+                if (!this.checked) {
+                    localStorage.removeItem('rememberedEmployee');
+                }
+            });
+
+            // Botones de actualización
+            elements.refreshEmployeesBtn.addEventListener('click', async () => {
+                await loadEmployees();
+                showToast("Lista de empleados actualizada", "success");
+            });
+
+            elements.refreshStatusBtn.addEventListener('click', async () => {
+                if (state.currentEmployee) {
+                    await loadEmployeeActiveStatus(state.currentEmployee.id);
+                    showToast("Estado actualizado", "info");
+                } else {
+                    showToast("Seleccione un operario primero", "warning");
+                }
+            });
+
+            // Botones de entrada/salida automáticos
+            elements.entryBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.entryBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                if (state.activeEntry) {
+                    showToast("Ya tiene una entrada registrada. Debe fichar salida primero.", "error");
+                    return;
+                }
+                
+                registerTime('entry', true);
+            });
+            
+            elements.exitBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.exitBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                if (!state.activeEntry) {
+                    showToast("No tiene una entrada registrada. Debe fichar entrada primero.", "error");
+                    return;
+                }
+                
+                registerTime('exit', true);
+            });
+
+            // Botones de entrada/salida manuales
+            elements.manualEntryBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.manualEntryBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                const dateStr = elements.manualWorkDate.value;
+                const timeStr = elements.manualWorkTime.value;
+                
+                if (!dateStr || !timeStr) {
+                    showToast("Complete fecha y hora para el fichaje manual", "warning");
+                    return;
+                }
+                
+                const manualDateTime = createDateTime(dateStr, timeStr);
+                const today = new Date();
+                const isToday = manualDateTime.toDateString() === today.toDateString();
+                
+                if (isToday && state.activeEntry) {
+                    showToast("Ya tiene una entrada registrada para hoy. Debe fichar salida primero.", "error");
+                    return;
+                }
+                
+                registerTime('entry', false);
+            });
+            
+            elements.manualExitBtn.addEventListener('click', () => {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.manualExitBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                
+                registerTime('exit', false);
+            });
+
+            // Botones especiales
+            elements.vacationBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.vacationBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('vacation');
+            });
+
+            elements.sickBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.sickBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('sick');
+            });
+
+            elements.travelBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.travelBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('travel');
+            });
+
+            // Nuevo botón de dieta
+            elements.dietBtn.addEventListener('click', function() {
+                if (!state.currentEmployee) {
+                    showToast("Debe seleccionar un operario primero", "warning");
+                    return;
+                }
+                if (elements.dietBtn.disabled) {
+                    showToast("Operación no permitida en este estado", "warning");
+                    return;
+                }
+                registerSpecialDay('diet');
+            });
+
+            // Login admin
+            elements.loginBtn.addEventListener('click', adminLogin);
+
+            // Logout admin
+            elements.logoutBtn.addEventListener('click', adminLogout);
+
+            // Gestión de empleados
+            elements.addEmployeeBtn.addEventListener('click', () => {
+                openEmployeeModal();
+            });
+
+            // Cerrar modales
+            elements.closeModalButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    closeEmployeeModal();
+                    closeEditVacationModal();
+                });
+            });
+
+            // Guardar empleado
+            elements.saveEmployeeBtn.addEventListener('click', async () => {
+                await saveEmployee();
+            });
+
+            // Eliminar empleado
+            elements.deleteEmployeeBtn.addEventListener('click', async () => {
+                await deleteEmployee();
+            });
+
+            // Asignar vacaciones
+            elements.assignVacationBtn.addEventListener('click', async () => {
+                await assignVacation();
+            });
+
+            // Editar vacaciones
+            elements.editVacationBtn.addEventListener('click', () => {
+                openEditVacationModal();
+            });
+
+            // Guardar edición de vacaciones
+            elements.saveVacationEditBtn.addEventListener('click', async () => {
+                await saveVacationEdit();
+            });
+
+            // Eliminar asignación de vacaciones
+            elements.deleteVacationAssignmentBtn.addEventListener('click', async () => {
+                await deleteVacationAssignment();
+            });
+
+            // Gestión de festivos
+            elements.addHolidayBtn.addEventListener('click', async () => {
+                await addHoliday();
+            });
+
+            elements.refreshHolidaysBtn.addEventListener('click', async () => {
+                await loadHolidays();
+                showToast("Festivos actualizados", "success");
+            });
+
+            // Filtrar registros
+            elements.filterBtn.addEventListener('click', async () => {
+                await filterRecords();
+            });
+
+            // Exportar registros
+            elements.exportBtn.addEventListener('click', exportRecords);
+
+            // Clic fuera del modal para cerrar
+            window.addEventListener('click', (event) => {
+                if (event.target === elements.employeeModal) {
+                    closeEmployeeModal();
+                }
+                if (event.target === elements.editVacationModal) {
+                    closeEditVacationModal();
+                }
+            });
+
+            // Atajos de teclado
+            document.addEventListener('keydown', (e) => {
+                if (elements.operatorTab.classList.contains('active') && state.currentEmployee) {
+                    if (e.key === 'e' || e.key === 'E') {
+                        e.preventDefault();
+                        if (!elements.entryBtn.disabled) {
+                            elements.entryBtn.click();
+                        }
+                    } else if (e.key === 's' || e.key === 'S') {
+                        e.preventDefault();
+                        if (!elements.exitBtn.disabled) {
+                            elements.exitBtn.click();
+                        }
+                    } else if (e.key === 'v' || e.key === 'V') {
+                        e.preventDefault();
+                        if (!elements.vacationBtn.disabled) {
+                            elements.vacationBtn.click();
+                        }
+                    } else if (e.key === 'd' || e.key === 'D') {
+                        e.preventDefault();
+                        if (!elements.dietBtn.disabled) {
+                            elements.dietBtn.click();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Configurar listener en tiempo real para empleado
+        function setupEmployeeRealtimeListener(employeeId) {
+            if (!employeeId) return;
+            
+            if (state.realtimeListeners[employeeId]) {
+                state.realtimeListeners[employeeId]();
+                delete state.realtimeListeners[employeeId];
+            }
+            
+            const unsubscribe = db.collection('employees').doc(employeeId)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const employeeData = doc.data();
+                        
+                        if (employeeData.activeEntry && employeeData.activeEntry.entryTime) {
+                            try {
+                                if (employeeData.activeEntry.entryTime.toDate) {
+                                    employeeData.activeEntry.entryTime = employeeData.activeEntry.entryTime.toDate();
+                                } else if (typeof employeeData.activeEntry.entryTime === 'string') {
+                                    employeeData.activeEntry.entryTime = new Date(employeeData.activeEntry.entryTime);
+                                }
+                            } catch (error) {
+                                console.error("Error convirtiendo timestamp:", error);
+                                employeeData.activeEntry.entryTime = new Date();
+                            }
+                        }
+                        
+                        const employeeIndex = state.employees.findIndex(emp => emp.id === employeeId);
+                        if (employeeIndex !== -1) {
+                            state.employees[employeeIndex] = { 
+                                ...state.employees[employeeIndex], 
+                                ...employeeData 
+                            };
+                        }
+                        
+                        if (state.currentEmployee && state.currentEmployee.id === employeeId) {
+                            state.currentEmployee = { ...state.currentEmployee, ...employeeData };
+                            
+                            state.activeEntry = employeeData.activeEntry || null;
+                            
+                            if (state.activeEntry && state.activeEntry.entryTime) {
+                                const today = new Date();
+                                const entryDate = new Date(state.activeEntry.entryTime);
+                                
+                                if (entryDate.toDateString() !== today.toDateString()) {
+                                    state.activeEntry = null;
+                                    state.currentEmployee.activeEntry = null;
+                                    
+                                    db.collection('employees').doc(employeeId).update({
+                                        activeEntry: null
+                                    }).catch(err => console.error("Error limpiando entrada vieja:", err));
+                                } else {
+                                    if (state.elapsedInterval) {
+                                        clearInterval(state.elapsedInterval);
+                                    }
+                                    state.elapsedInterval = setInterval(updateElapsedTime, 1000);
+                                    updateElapsedTime();
+                                }
+                            } else if (state.elapsedInterval) {
+                                clearInterval(state.elapsedInterval);
+                                state.elapsedInterval = null;
+                            }
+                            
+                            updateEmployeeUI();
+                        }
+                    }
+                }, (error) => {
+                    console.error("Error en listener en tiempo real:", error);
+                });
+            
+            state.realtimeListeners[employeeId] = unsubscribe;
+        }
+
+        // Cambiar pestaña
+        function switchTab(tabId) {
+            elements.tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            if (tabId === 'operator') {
+                elements.operatorTab.classList.add('active');
+                elements.adminTab.classList.remove('active');
+                
+                updateEmployeeUI();
+                
+            } else {
+                elements.operatorTab.classList.remove('active');
+                elements.adminTab.classList.add('active');
+                
+                if (!state.isAdmin) {
+                    elements.adminLogin.style.display = 'block';
+                    elements.adminPanel.style.display = 'none';
+                } else {
+                    elements.adminLogin.style.display = 'none';
+                    elements.adminPanel.style.display = 'block';
+                    loadAdminStatistics();
+                }
+            }
+        }
+
+        // Cargar empleado recordado
+        function loadRememberedEmployee() {
+            const rememberedEmployeeId = localStorage.getItem('rememberedEmployee');
+            if (rememberedEmployeeId) {
+                elements.rememberEmployee.checked = true;
+            }
+        }
+
+        // Cargar empleados desde Firebase
+        async function loadEmployees() {
+            try {
+                const snapshot = await db.collection('employees').orderBy('name').get();
+                
+                state.employees = [];
+                elements.employeeSelect.innerHTML = '<option value="">Seleccione un operario</option>';
+                elements.vacationEmployee.innerHTML = '<option value="">Seleccione empleado</option>';
+                elements.filterEmployee.innerHTML = '<option value="">Todos los empleados</option>';
+                elements.editVacationEmployee.innerHTML = '<option value="">Seleccione empleado</option>';
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    let vacationDays = data.vacationDays || {};
+                    let vacationNotes = data.vacationNotes || {};
+                    
+                    const currentYear = new Date().getFullYear();
+                    if (data.vacationDays2026 !== undefined && !vacationDays[currentYear]) {
+                        vacationDays[currentYear] = data.vacationDays2026;
+                        vacationNotes[currentYear] = "Migrado desde estructura anterior";
+                    }
+                    
+                    const employee = { 
+                        id: doc.id, 
+                        ...data,
+                        vacationDays: vacationDays,
+                        vacationNotes: vacationNotes,
+                        activeEntry: doc.data().activeEntry ? {
+                            ...doc.data().activeEntry,
+                            entryTime: convertTimestampToDate(doc.data().activeEntry.entryTime)
+                        } : null
+                    };
+                    state.employees.push(employee);
+                    
+                    const option = document.createElement('option');
+                    option.value = employee.id;
+                    option.textContent = employee.name;
+                    elements.employeeSelect.appendChild(option);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = employee.id;
+                    option2.textContent = employee.name;
+                    elements.vacationEmployee.appendChild(option2);
+                    
+                    const option3 = document.createElement('option');
+                    option3.value = employee.id;
+                    option3.textContent = employee.name;
+                    elements.filterEmployee.appendChild(option3);
+
+                    const option4 = document.createElement('option');
+                    option4.value = employee.id;
+                    option4.textContent = employee.name;
+                    elements.editVacationEmployee.appendChild(option4);
+                });
+                
+                updateEmployeesList();
+                elements.totalEmployees.textContent = state.employees.length.toString();
+                
+                const rememberedEmployeeId = localStorage.getItem('rememberedEmployee');
+                if (rememberedEmployeeId && state.employees.some(emp => emp.id === rememberedEmployeeId)) {
+                    elements.employeeSelect.value = rememberedEmployeeId;
+                    const event = new Event('change');
+                    elements.employeeSelect.dispatchEvent(event);
+                }
+                
+                return true;
+                
+            } catch (error) {
+                console.error("Error cargando empleados:", error);
+                showToast("Error cargando empleados", "error");
+                return false;
+            }
+        }
+
+        // Cargar festivos desde Firebase
+        async function loadHolidays() {
+            try {
+                const year = elements.holidayYear.value || new Date().getFullYear();
+                const snapshot = await db.collection('holidays')
+                    .where('year', '==', parseInt(year))
+                    .orderBy('date')
+                    .get();
+                
+                state.holidays = [];
+                snapshot.forEach(doc => {
+                    state.holidays.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                updateHolidaysList();
+                return true;
+                
+            } catch (error) {
+                console.error("Error cargando festivos:", error);
+                showToast("Error cargando festivos", "error");
+                return false;
+            }
+        }
+
+        // Actualizar lista de festivos en admin
+        function updateHolidaysList() {
+            elements.holidaysList.innerHTML = '';
+            
+            if (state.holidays.length === 0) {
+                elements.holidaysList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar"></i>
+                        <p>No hay días festivos configurados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            state.holidays.forEach(holiday => {
+                const holidayItem = document.createElement('div');
+                holidayItem.className = 'holiday-item';
+                holidayItem.dataset.id = holiday.id;
+                
+                const date = new Date(holiday.date);
+                const formattedDate = formatDate(date);
+                const dayOfWeek = date.getDay();
+                const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                
+                holidayItem.innerHTML = `
+                    <div class="holiday-date">
+                        ${formattedDate}
+                    </div>
+                    <div class="holiday-description">
+                        <strong>${holiday.description || 'Día festivo'}</strong>
+                        <div style="font-size: 0.8rem; color: #7f8c8d;">
+                            ${days[dayOfWeek]} • Año ${holiday.year}
+                        </div>
+                    </div>
+                    <div class="holiday-actions">
+                        <button class="btn btn-small btn-danger delete-holiday-btn" data-id="${holiday.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                elements.holidaysList.appendChild(holidayItem);
+            });
+            
+            document.querySelectorAll('.delete-holiday-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const holidayId = btn.getAttribute('data-id');
+                    const holiday = state.holidays.find(h => h.id === holidayId);
+                    
+                    if (confirm(`¿Eliminar el festivo "${holiday.description || holiday.date}"?`)) {
+                        await deleteHoliday(holidayId);
+                    }
+                });
+            });
+        }
+
+        // Agregar festivo
+        async function addHoliday() {
+            const dateStr = elements.holidayDate.value;
+            const description = elements.holidayDescription.value.trim();
+            const year = parseInt(elements.holidayYear.value);
+            
+            if (!dateStr) {
+                showToast("Seleccione una fecha para el festivo", "warning");
+                return;
+            }
+            
+            const existingHoliday = state.holidays.find(h => h.date === dateStr);
+            if (existingHoliday) {
+                showToast("Ya existe un festivo en esta fecha", "warning");
+                return;
+            }
+            
+            try {
+                const holiday = {
+                    date: dateStr,
+                    year: year,
+                    month: parseInt(dateStr.split('-')[1]),
+                    day: parseInt(dateStr.split('-')[2]),
+                    description: description || 'Día festivo',
+                    createdAt: new Date(),
+                    createdBy: 'admin'
+                };
+                
+                await db.collection('holidays').add(holiday);
+                
+                showToast("Festivo agregado correctamente", "success");
+                
+                elements.holidayDescription.value = '';
+                
+                await loadHolidays();
+                
+            } catch (error) {
+                console.error("Error agregando festivo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Eliminar festivo
+        async function deleteHoliday(holidayId) {
+            try {
+                await db.collection('holidays').doc(holidayId).delete();
+                
+                showToast("Festivo eliminado correctamente", "success");
+                await loadHolidays();
+                
+            } catch (error) {
+                console.error("Error eliminando festivo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Actualizar lista de empleados en admin
+        function updateEmployeesList() {
+            elements.employeesList.innerHTML = '';
+            
+            if (state.employees.length === 0) {
+                elements.employeesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No hay empleados registrados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            state.employees.forEach(employee => {
+                const employeeItem = document.createElement('div');
+                employeeItem.className = 'employee-item';
+                employeeItem.dataset.id = employee.id;
+                
+                const isActive = employee.activeEntry ? true : false;
+                const statusText = isActive ? 
+                    `<span style="color: var(--success); font-weight: bold;">● ACTIVO</span>` : 
+                    `<span style="color: #bdc3c7;">● INACTIVO</span>`;
+                
+                let entryTimeText = '';
+                if (isActive && employee.activeEntry && employee.activeEntry.entryTime) {
+                    const entryTime = convertTimestampToDate(employee.activeEntry.entryTime);
+                    entryTimeText = `<p style="color: var(--success); font-size: 0.8rem;">
+                        <i class="fas fa-clock"></i> Entrada: ${formatTimeWithSeconds(entryTime)}
+                    </p>`;
+                }
+                
+                const currentYear = new Date().getFullYear();
+                const vacationDays = employee.vacationDays || {};
+                const vacationNotes = employee.vacationNotes || {};
+                
+                employeeItem.innerHTML = `
+                    <div class="employee-info">
+                        <h4>${employee.name} ${statusText}</h4>
+                        <p>${employee.department || 'Sin departamento'} • ID: ${employee.id}</p>
+                        <p>Vacaciones ${currentYear}: 
+                            <span class="vacation-days" style="background-color: ${vacationDays[currentYear] < 0 ? 'var(--danger)' : 'var(--vacation)'}">
+                                ${vacationDays[currentYear] || 0} días
+                            </span>
+                        </p>
+                        ${vacationNotes[currentYear] ? 
+                            `<p style="font-size: 0.8rem; color: var(--info); margin-top: 2px;">
+                                <i class="fas fa-info-circle"></i> ${vacationNotes[currentYear]}
+                            </p>` : ''
+                        }
+                        ${entryTimeText}
+                    </div>
+                    <div class="employee-actions">
+                        <button class="btn btn-small btn-warning edit-employee-btn" data-id="${employee.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-danger delete-employee-btn" data-id="${employee.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                elements.employeesList.appendChild(employeeItem);
+            });
+            
+            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const employeeId = btn.getAttribute('data-id');
+                    openEmployeeModal(employeeId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const employeeId = btn.getAttribute('data-id');
+                    if (confirm(`¿Eliminar al empleado ${state.employees.find(e => e.id === employeeId)?.name}?`)) {
+                        await deleteEmployee(employeeId);
+                    }
+                });
+            });
+        }
+
+        // Abrir modal de empleado
+        function openEmployeeModal(employeeId = null) {
+            if (employeeId) {
+                state.editingEmployeeId = employeeId;
+                const employee = state.employees.find(emp => emp.id === employeeId);
+                
+                elements.modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Empleado';
+                elements.employeeName.value = employee.name || '';
+                elements.employeeDepartment.value = employee.department || '';
+                elements.employeeIdDisplay.style.display = 'block';
+                elements.employeeIdText.textContent = employeeId;
+                elements.deleteEmployeeBtn.style.display = 'block';
+                
+            } else {
+                state.editingEmployeeId = null;
+                elements.modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Nuevo Empleado';
+                elements.employeeName.value = '';
+                elements.employeeDepartment.value = '';
+                elements.employeeIdDisplay.style.display = 'none';
+                elements.deleteEmployeeBtn.style.display = 'none';
+            }
+            
+            elements.employeeModal.classList.add('active');
+        }
+
+        // Cerrar modal de empleado
+        function closeEmployeeModal() {
+            elements.employeeModal.classList.remove('active');
+            state.editingEmployeeId = null;
+        }
+
+        // Abrir modal de edición de vacaciones
+        function openEditVacationModal() {
+            elements.editVacationEmployee.innerHTML = '<option value="">Seleccione empleado</option>';
+            
+            state.employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = employee.name;
+                elements.editVacationEmployee.appendChild(option);
+            });
+            
+            elements.editVacationDays.value = 0;
+            elements.editVacationNotes.value = '';
+            elements.deleteVacationAssignmentBtn.style.display = 'none';
+            
+            elements.editVacationModal.classList.add('active');
+        }
+
+        // Cerrar modal de edición de vacaciones
+        function closeEditVacationModal() {
+            elements.editVacationModal.classList.remove('active');
+        }
+
+        // Guardar empleado
+        async function saveEmployee() {
+            const name = elements.employeeName.value.trim();
+            
+            if (!name) {
+                showToast("El nombre es obligatorio", "warning");
+                return;
+            }
+            
+            try {
+                if (state.editingEmployeeId) {
+                    await db.collection('employees').doc(state.editingEmployeeId).update({
+                        name: name,
+                        department: elements.employeeDepartment.value.trim() || '',
+                        updatedAt: new Date()
+                    });
+                    
+                    showToast("Empleado actualizado correctamente", "success");
+                    
+                } else {
+                    const employeeId = 'EMP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    
+                    await db.collection('employees').doc(employeeId).set({
+                        id: employeeId,
+                        name: name,
+                        department: elements.employeeDepartment.value.trim() || '',
+                        vacationDays: {
+                            2026: 22
+                        },
+                        vacationNotes: {
+                            2026: "Asignación inicial: 22 días"
+                        },
+                        activeEntry: null,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                    
+                    showToast("Empleado creado correctamente", "success");
+                }
+                
+                closeEmployeeModal();
+                await loadEmployees();
+                
+            } catch (error) {
+                console.error("Error guardando empleado:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Eliminar empleado
+        async function deleteEmployee(employeeId = null) {
+            const idToDelete = employeeId || state.editingEmployeeId;
+            
+            if (!idToDelete) return;
+            
+            try {
+                const employee = state.employees.find(emp => emp.id === idToDelete);
+                if (!employee) return;
+                
+                await db.collection('employees').doc(idToDelete).delete();
+                
+                showToast("Empleado eliminado correctamente", "success");
+                
+                closeEmployeeModal();
+                await loadEmployees();
+                
+            } catch (error) {
+                console.error("Error eliminando empleado:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Actualizar reloj
+        function updateClock() {
+            state.currentTime = new Date();
+            const timeString = formatTimeWithSeconds(state.currentTime);
+            elements.currentTime.textContent = timeString;
+            
+            if (state.activeEntry) {
+                updateElapsedTime();
+            }
+        }
+
+        // Actualizar tiempo transcurrido
+        function updateElapsedTime() {
+            if (!state.activeEntry || !state.activeEntry.entryTime) {
+                elements.elapsedTime.style.display = 'none';
+                return;
+            }
+            
+            try {
+                const entryTime = new Date(state.activeEntry.entryTime);
+                
+                if (isNaN(entryTime.getTime())) {
+                    console.error("Fecha de entrada inválida:", state.activeEntry.entryTime);
+                    elements.elapsedTime.style.display = 'none';
+                    return;
+                }
+                
+                const now = new Date();
+                const diffMs = now - entryTime;
+                
+                if (isNaN(diffMs) || diffMs < 0) {
+                    console.error("Diferencia de tiempo inválida:", diffMs);
+                    elements.elapsedTime.style.display = 'none';
+                    return;
+                }
+                
+                const totalSeconds = Math.floor(diffMs / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+                    elements.elapsedHours.textContent = hours.toString().padStart(2, '0');
+                    elements.elapsedMinutes.textContent = minutes.toString().padStart(2, '0');
+                    elements.elapsedSeconds.textContent = seconds.toString().padStart(2, '0');
+                    elements.elapsedTime.style.display = 'block';
+                } else {
+                    console.error("Valores NaN en cálculo de tiempo:", {hours, minutes, seconds});
+                    elements.elapsedTime.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Error actualizando tiempo transcurrido:", error);
+                elements.elapsedTime.style.display = 'none';
+            }
+        }
+
+        // Cargar estado activo del empleado desde Firebase
+        async function loadEmployeeActiveStatus(employeeId) {
+            try {
+                const doc = await db.collection('employees').doc(employeeId).get();
+                if (doc.exists) {
+                    const employeeData = doc.data();
+                    
+                    let activeEntry = employeeData.activeEntry || null;
+                    if (activeEntry && activeEntry.entryTime) {
+                        try {
+                            activeEntry.entryTime = convertTimestampToDate(activeEntry.entryTime);
+                            
+                            const today = new Date();
+                            const entryDate = new Date(activeEntry.entryTime);
+                            
+                            if (entryDate.toDateString() !== today.toDateString()) {
+                                activeEntry = null;
+                                await db.collection('employees').doc(employeeId).update({
+                                    activeEntry: null
+                                });
+                            }
+                        } catch (error) {
+                            console.error("Error procesando activeEntry:", error);
+                            activeEntry = null;
+                        }
+                    }
+                    
+                    const employeeIndex = state.employees.findIndex(emp => emp.id === employeeId);
+                    if (employeeIndex !== -1) {
+                        state.employees[employeeIndex] = { 
+                            ...state.employees[employeeIndex], 
+                            ...employeeData,
+                            activeEntry: activeEntry 
+                        };
+                    }
+                    
+                    if (state.currentEmployee && state.currentEmployee.id === employeeId) {
+                        state.currentEmployee = { ...state.currentEmployee, ...employeeData };
+                        state.activeEntry = activeEntry;
+                        
+                        if (activeEntry && activeEntry.entryTime) {
+                            if (state.elapsedInterval) {
+                                clearInterval(state.elapsedInterval);
+                            }
+                            state.elapsedInterval = setInterval(updateElapsedTime, 1000);
+                            updateElapsedTime();
+                        } else if (state.elapsedInterval) {
+                            clearInterval(state.elapsedInterval);
+                            state.elapsedInterval = null;
+                        }
+                    }
+                    
+                    return activeEntry;
+                }
+                return null;
+            } catch (error) {
+                console.error("Error cargando estado activo:", error);
+                return null;
+            }
+        }
+
+        // Actualizar UI del empleado
+        function updateEmployeeUI() {
+            const hasEmployee = state.currentEmployee !== null;
+            const hasActiveEntry = state.activeEntry !== null && state.activeEntry.entryTime;
+            
+            if (!hasEmployee) {
+                elements.statusDot.className = 'status-dot inactive';
+                elements.statusText.textContent = 'Seleccione un operario';
+                elements.elapsedTime.style.display = 'none';
+                
+                elements.entryBtn.disabled = true;
+                elements.exitBtn.disabled = true;
+                elements.manualEntryBtn.disabled = true;
+                elements.manualExitBtn.disabled = true;
+                elements.vacationBtn.disabled = true;
+                elements.sickBtn.disabled = true;
+                elements.travelBtn.disabled = true;
+                elements.dietBtn.disabled = true;
+                
+                elements.hoursToday.textContent = "00:00:00";
+                elements.hoursMonth.textContent = "00:00:00";
+                elements.vacationPending.textContent = "0d";
+                elements.daysWorked.textContent = "0";
+                
+            } else {
+                if (hasActiveEntry) {
+                    elements.statusDot.className = 'status-dot active';
+                    elements.statusText.textContent = 'Entrada registrada - ACTIVO';
+                    elements.statusText.style.color = 'var(--success)';
+                    elements.statusText.style.fontWeight = 'bold';
+                } else {
+                    elements.statusDot.className = 'status-dot inactive';
+                    elements.statusText.textContent = 'Listo para fichar - INACTIVO';
+                    elements.statusText.style.color = '#7f8c8d';
+                    elements.statusText.style.fontWeight = 'normal';
+                }
+                
+                elements.entryBtn.disabled = hasActiveEntry;
+                elements.exitBtn.disabled = !hasActiveEntry;
+                
+                elements.manualEntryBtn.disabled = false;
+                elements.manualExitBtn.disabled = false;
+                
+                elements.vacationBtn.disabled = false;
+                elements.sickBtn.disabled = false;
+                elements.travelBtn.disabled = false;
+                elements.dietBtn.disabled = false;
+                
+                const currentYear = new Date().getFullYear();
+                const vacationDays = state.currentEmployee.vacationDays || {};
+                const pendingVacation = vacationDays[currentYear] || 0;
+                elements.vacationPending.textContent = `${pendingVacation}d`;
+                elements.vacationBadge.textContent = `${pendingVacation} días`;
+                
+                if (hasActiveEntry) {
+                    if (!state.elapsedInterval) {
+                        state.elapsedInterval = setInterval(updateElapsedTime, 1000);
+                    }
+                    updateElapsedTime();
+                } else {
+                    elements.elapsedTime.style.display = 'none';
+                    
+                    if (state.elapsedInterval) {
+                        clearInterval(state.elapsedInterval);
+                        state.elapsedInterval = null;
+                    }
+                }
+            }
+        }
+
+        // Función para calcular días de vacaciones usados en un año específico
+        async function getUsedVacationDays(employeeId, year) {
+            try {
+                const yearNum = typeof year === 'string' ? parseInt(year) : year;
+                
+                const snapshot = await db.collection('records')
+                    .where('employeeId', '==', employeeId)
+                    .where('type', '==', 'vacation')
+                    .where('year', '==', yearNum)
+                    .get();
+                
+                return snapshot.size;
+                
+            } catch (error) {
+                console.error(`Error obteniendo días de vacaciones usados para ${year}:`, error);
+                return 0;
+            }
+        }
+
+        // Asignar vacaciones con acumulación ilimitada y compensación ilimitada
+        async function assignVacation() {
+            const employeeId = elements.vacationEmployee.value;
+            const year = parseInt(elements.vacationYear.value);
+            const newDays = parseInt(elements.vacationDays.value);
+            
+            if (!employeeId) {
+                showToast("Seleccione un empleado", "warning");
+                return;
+            }
+            
+            if (isNaN(newDays)) {
+                showToast("Número de días inválido", "warning");
+                return;
+            }
+            
+            try {
+                showLoading("Calculando balance de vacaciones...");
+                
+                const employeeDoc = await db.collection('employees').doc(employeeId).get();
+                if (!employeeDoc.exists) {
+                    throw new Error("Empleado no encontrado");
+                }
+                
+                const employeeData = employeeDoc.data();
+                
+                const currentVacationDays = employeeData.vacationDays || {};
+                const currentVacationNotes = employeeData.vacationNotes || {};
+                
+                let accumulatedDays = 0;
+                let compensationDays = 0;
+                
+                if (year > 2024) {
+                    const previousYear = year - 1;
+                    
+                    const previousYearDays = currentVacationDays[previousYear] || 0;
+                    
+                    const usedPreviousYear = await getUsedVacationDays(employeeId, previousYear);
+                    
+                    const previousYearBalance = previousYearDays - usedPreviousYear;
+                    
+                    if (previousYearBalance > 0) {
+                        accumulatedDays = previousYearBalance;
+                    } else if (previousYearBalance < 0) {
+                        compensationDays = Math.abs(previousYearBalance);
+                    }
+                }
+                
+                const totalDays = newDays + accumulatedDays - compensationDays;
+                
+                let detailedNote = `${newDays} días asignados para ${year}.`;
+                
+                if (accumulatedDays > 0) {
+                    detailedNote += ` Se acumularon ${accumulatedDays} días de ${year-1}.`;
+                }
+                
+                if (compensationDays > 0) {
+                    detailedNote += ` Se compensaron ${compensationDays} días consumidos de más en ${year-1}.`;
+                }
+                
+                if (accumulatedDays === 0 && compensationDays === 0 && year > 2024) {
+                    detailedNote += ` Balance exacto del año anterior (sin días pendientes ni excesos).`;
+                }
+                
+                if (totalDays < 0) {
+                    detailedNote += ` ATENCIÓN: El empleado tiene una deuda de ${Math.abs(totalDays)} días de vacaciones para el año ${year}.`;
+                }
+                
+                await db.collection('employees').doc(employeeId).update({
+                    [`vacationDays.${year}`]: totalDays,
+                    [`vacationNotes.${year}`]: detailedNote,
+                    updatedAt: new Date()
+                });
+                
+                const employeeIndex = state.employees.findIndex(emp => emp.id === employeeId);
+                if (employeeIndex !== -1) {
+                    state.employees[employeeIndex].vacationDays = {
+                        ...state.employees[employeeIndex].vacationDays,
+                        [year]: totalDays
+                    };
+                    state.employees[employeeIndex].vacationNotes = {
+                        ...state.employees[employeeIndex].vacationNotes,
+                        [year]: detailedNote
+                    };
+                }
+                
+                let summaryMessage = `${totalDays} días asignados para ${year}`;
+                
+                if (accumulatedDays > 0) {
+                    summaryMessage += ` (${newDays} nuevos + ${accumulatedDays} acumulados)`;
+                } else if (compensationDays > 0) {
+                    summaryMessage += ` (${newDays} nuevos - ${compensationDays} compensados)`;
+                }
+                
+                hideLoading();
+                showToast(summaryMessage, totalDays < 0 ? "warning" : "success");
+                
+                await loadEmployees();
+                
+                if (state.currentEmployee && state.currentEmployee.id === employeeId) {
+                    const currentYear = new Date().getFullYear();
+                    const currentVacation = state.employees[employeeIndex].vacationDays?.[currentYear] || 0;
+                    elements.vacationPending.textContent = `${currentVacation}d`;
+                    elements.vacationBadge.textContent = `${currentVacation} días`;
+                }
+                
+            } catch (error) {
+                hideLoading();
+                console.error("Error asignando vacaciones:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Guardar edición de vacaciones
+        async function saveVacationEdit() {
+            const employeeId = elements.editVacationEmployee.value;
+            const year = parseInt(elements.editVacationYear.value);
+            const newDays = parseInt(elements.editVacationDays.value);
+            const notes = elements.editVacationNotes.value.trim();
+            
+            if (!employeeId) {
+                showToast("Seleccione un empleado", "warning");
+                return;
+            }
+            
+            if (isNaN(newDays)) {
+                showToast("Número de días inválido", "warning");
+                return;
+            }
+            
+            try {
+                const employeeDoc = await db.collection('employees').doc(employeeId).get();
+                if (!employeeDoc.exists) {
+                    throw new Error("Empleado no encontrado");
+                }
+                
+                const employeeData = employeeDoc.data();
+                const currentVacationDays = employeeData.vacationDays || {};
+                const currentVacationNotes = employeeData.vacationNotes || {};
+                
+                const updatedVacationDays = {
+                    ...currentVacationDays,
+                    [year]: newDays
+                };
+                
+                const updatedVacationNotes = {
+                    ...currentVacationNotes,
+                    [year]: notes || `Editado el ${new Date().toLocaleDateString()}`
+                };
+                
+                await db.collection('employees').doc(employeeId).update({
+                    [`vacationDays.${year}`]: newDays,
+                    [`vacationNotes.${year}`]: notes || `Editado el ${new Date().toLocaleDateString()}`,
+                    updatedAt: new Date()
+                });
+                
+                const employeeIndex = state.employees.findIndex(emp => emp.id === employeeId);
+                if (employeeIndex !== -1) {
+                    state.employees[employeeIndex].vacationDays = updatedVacationDays;
+                    state.employees[employeeIndex].vacationNotes = updatedVacationNotes;
+                }
+                
+                showToast(`Vacaciones para ${year} actualizadas a ${newDays} días`, "success");
+                
+                closeEditVacationModal();
+                
+                await loadEmployees();
+                
+            } catch (error) {
+                console.error("Error editando vacaciones:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Eliminar asignación de vacaciones
+        async function deleteVacationAssignment() {
+            const employeeId = elements.editVacationEmployee.value;
+            const year = parseInt(elements.editVacationYear.value);
+            
+            if (!employeeId) {
+                showToast("Seleccione un empleado", "warning");
+                return;
+            }
+            
+            try {
+                const employeeDoc = await db.collection('employees').doc(employeeId).get();
+                if (!employeeDoc.exists) {
+                    throw new Error("Empleado no encontrado");
+                }
+                
+                const employeeData = employeeDoc.data();
+                const currentVacationDays = { ...(employeeData.vacationDays || {}) };
+                const currentVacationNotes = { ...(employeeData.vacationNotes || {}) };
+                
+                delete currentVacationDays[year];
+                delete currentVacationNotes[year];
+                
+                await db.collection('employees').doc(employeeId).update({
+                    vacationDays: currentVacationDays,
+                    vacationNotes: currentVacationNotes,
+                    updatedAt: new Date()
+                });
+                
+                const employeeIndex = state.employees.findIndex(emp => emp.id === employeeId);
+                if (employeeIndex !== -1) {
+                    state.employees[employeeIndex].vacationDays = currentVacationDays;
+                    state.employees[employeeIndex].vacationNotes = currentVacationNotes;
+                }
+                
+                showToast(`Asignación de vacaciones para ${year} eliminada`, "success");
+                
+                closeEditVacationModal();
+                
+                await loadEmployees();
+                
+            } catch (error) {
+                console.error("Error eliminando asignación de vacaciones:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Registrar día especial (vacaciones, baja, viaje, dieta)
+        async function registerSpecialDay(type) {
+            if (!state.currentEmployee) {
+                showToast("Debe seleccionar un operario primero", "warning");
+                return;
+            }
+            
+            const dateStr = elements.specialDate.value;
+            if (!dateStr) {
+                showToast("Seleccione una fecha para el registro especial", "warning");
+                return;
+            }
+            
+            const now = new Date();
+            const recordTime = new Date(dateStr);
+            recordTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+            
+            const isHolidayDay = isHoliday(recordTime);
+            const dayOfWeek = recordTime.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            
+            const confirmMessages = {
+                'vacation': {
+                    title: 'Registrar Vacaciones',
+                    message: `¿Está seguro de registrar VACACIONES para ${state.currentEmployee.name} el ${formatDate(recordTime)}?${isHolidayDay ? '\n\n⚠️ ATENCIÓN: Este día está marcado como FESTIVO.' : ''}\n\nSe descontará 1 día de sus vacaciones disponibles.`,
+                    icon: 'fas fa-umbrella-beach'
+                },
+                'sick': {
+                    title: 'Registrar Baja Laboral',
+                    message: `¿Está seguro de registrar BAJA LABORAL para ${state.currentEmployee.name} el ${formatDate(recordTime)}?${isHolidayDay ? '\n\n⚠️ ATENCIÓN: Este día está marcado como FESTIVO.' : ''}`,
+                    icon: 'fas fa-hospital'
+                },
+                'travel': {
+                    title: 'Registrar Viaje de Trabajo',
+                    message: `¿Está seguro de registrar VIAJE DE TRABAJO para ${state.currentEmployee.name} el ${formatDate(recordTime)}?${isHolidayDay || isWeekend ? '\n\n⚠️ ATENCIÓN: Este día es ' + (isHolidayDay ? 'FESTIVO' : 'FIN DE SEMANA') + '.' : ''}\n\n• Se registrarán 8 horas automáticamente\n• Si es fin de semana o festivo, se añadirá 1 día extra de vacaciones`,
+                    icon: 'fas fa-plane'
+                },
+                'diet': {
+                    title: 'Registrar Dieta',
+                    message: `¿Está seguro de registrar DIETA para ${state.currentEmployee.name} el ${formatDate(recordTime)}?${isHolidayDay ? '\n\n⚠️ ATENCIÓN: Este día está marcado como FESTIVO.' : ''}\n\n• Valor: 1€\n• Se registrará como un día con dieta`,
+                    icon: 'fas fa-utensils'
+                }
+            };
+            
+            const confirmData = confirmMessages[type];
+            
+            const confirmed = await showConfirmationModal(
+                confirmData.title,
+                confirmData.message,
+                confirmData.icon,
+                type
+            );
+            
+            if (!confirmed) {
+                showToast("Registro cancelado", "info");
+                return;
+            }
+            
+            let extraVacation = 0;
+            if (type === 'travel') {
+                if (isWeekend || isHolidayDay) {
+                    extraVacation = 1;
+                }
+            }
+            
+            const record = {
+                employeeId: state.currentEmployee.id,
+                employeeName: state.currentEmployee.name,
+                type: type,
+                timestamp: recordTime,
+                date: recordTime.toISOString().split('T')[0],
+                year: recordTime.getFullYear(),
+                month: recordTime.getMonth() + 1,
+                day: recordTime.getDate(),
+                hour: recordTime.getHours(),
+                minute: recordTime.getMinutes(),
+                second: recordTime.getSeconds(),
+                extraVacation: extraVacation,
+                hoursWorkedFormatted: type === 'travel' ? '08:00:00' : null,
+                isManual: true,
+                isHoliday: isHolidayDay,
+                isWeekend: isWeekend
+            };
+            
+            if (type === 'travel') {
+                record.hoursWorked = 8;
+            }
+            
+            // Añadir campo de dieta para el tipo 'diet'
+            if (type === 'diet') {
+                record.hasDiet = true;
+                record.dietAmount = 1;
+                record.isDietDay = true;
+            }
+            
+            try {
+                await db.collection('records').add(record);
+                
+                if (type === 'travel' && extraVacation > 0) {
+                    const currentYear = new Date().getFullYear();
+                    const currentVacationDays = state.currentEmployee.vacationDays || {};
+                    const newVacationDays = (currentVacationDays[currentYear] || 0) + extraVacation;
+                    
+                    await db.collection('employees').doc(state.currentEmployee.id).update({
+                        [`vacationDays.${currentYear}`]: newVacationDays
+                    });
+                    
+                    state.currentEmployee.vacationDays = {
+                        ...state.currentEmployee.vacationDays,
+                        [currentYear]: newVacationDays
+                    };
+                    
+                    const reason = isHolidayDay ? 'festivo' : 'fin de semana';
+                    showToast(`Viaje en ${reason}. Se añadió ${extraVacation} día extra de vacaciones.`, "info");
+                }
+                
+                if (type === 'vacation') {
+                    const currentYear = new Date().getFullYear();
+                    const currentVacationDays = state.currentEmployee.vacationDays || {};
+                    
+                    const newVacationDays = (currentVacationDays[currentYear] || 0) - 1;
+                    
+                    await db.collection('employees').doc(state.currentEmployee.id).update({
+                        [`vacationDays.${currentYear}`]: newVacationDays
+                    });
+                    
+                    state.currentEmployee.vacationDays = {
+                        ...state.currentEmployee.vacationDays,
+                        [currentYear]: newVacationDays
+                    };
+                    
+                    if (newVacationDays < 0) {
+                        showToast(`Vacaciones consumidas. Saldo actual: ${newVacationDays} días`, "warning");
+                    }
+                }
+                
+                updateEmployeeUI();
+                await loadEmployeeStatistics(state.currentEmployee.id);
+                
+                const typeNames = {
+                    'vacation': 'Vacaciones',
+                    'sick': 'Baja laboral',
+                    'travel': 'Viaje de trabajo',
+                    'diet': 'Dieta'
+                };
+                
+                let extraInfo = '';
+                if (isHolidayDay) extraInfo = ' (Festivo)';
+                else if (isWeekend) extraInfo = ' (Fin de semana)';
+                
+                showToast(`${typeNames[type]} registrada correctamente para el ${formatDate(recordTime)}${extraInfo}`, "success");
+                
+                const todayStr = new Date().toISOString().split('T')[0];
+                elements.specialDate.value = todayStr;
+                
+            } catch (error) {
+                console.error("Error registrando día especial:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Función para buscar la última entrada del mismo operario en el mismo día
+        async function findEntryForDay(employeeId, dateStr, exitTime, preferManual = true) {
+            try {
+                const entriesSnapshot = await db.collection('records')
+                    .where('employeeId', '==', employeeId)
+                    .where('type', '==', 'entry')
+                    .get();
+                
+                let entries = [];
+                
+                entriesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const time = convertTimestampToDate(data.timestamp);
+                    const entryDate = time.toISOString().split('T')[0];
+                    
+                    if (entryDate === dateStr && time < exitTime) {
+                        entries.push({
+                            id: doc.id,
+                            time: time,
+                            data: data,
+                            isManual: data.isManual === true
+                        });
+                    }
+                });
+                
+                if (entries.length === 0) {
+                    return null;
+                }
+                
+                entries.sort((a, b) => b.time - a.time);
+                
+                if (preferManual) {
+                    const manualEntry = entries.find(e => e.isManual);
+                    if (manualEntry) {
+                        return manualEntry;
+                    }
+                }
+                
+                return entries[0];
+                
+            } catch (error) {
+                console.error("Error en búsqueda simple:", error);
+                return null;
+            }
+        }
+
+        // Función para calcular horas trabajadas entre entrada y salida
+        function calculateWorkedHours(entryTime, exitTime) {
+            if (!entryTime || !exitTime) {
+                console.error("Tiempos de entrada o salida no válidos");
+                return 0;
+            }
+            
+            try {
+                const entry = new Date(entryTime);
+                const exit = new Date(exitTime);
+                
+                if (isNaN(entry.getTime()) || isNaN(exit.getTime())) {
+                    console.error("Fechas inválidas para cálculo de horas");
+                    return 0;
+                }
+                
+                const diffMs = exit - entry;
+                
+                if (diffMs < 0) {
+                    console.error("La salida es anterior a la entrada");
+                    return 0;
+                }
+                
+                const hours = diffMs / (1000 * 60 * 60);
+                return hours;
+            } catch (error) {
+                console.error("Error calculando horas trabajadas:", error);
+                return 0;
+            }
+        }
+
+        // Registrar tiempo (entrada/salida)
+        async function registerTime(type, isAutomatic = true) {
+            if (!state.currentEmployee) {
+                showToast("Debe seleccionar un operario primero", "warning");
+                return;
+            }
+            
+            let recordTime;
+            let isManual = false;
+            
+            if (isAutomatic) {
+                recordTime = new Date();
+            } else {
+                const dateStr = elements.manualWorkDate.value;
+                const timeStr = elements.manualWorkTime.value;
+                
+                if (!dateStr || !timeStr) {
+                    showToast("Complete fecha y hora para el fichaje manual", "warning");
+                    return;
+                }
+                
+                recordTime = createDateTime(dateStr, timeStr);
+                isManual = true;
+            }
+            
+            // Obtener si se marcó la casilla de dieta
+            const hasDiet = isAutomatic ? 
+                elements.autoDietCheckbox.checked : 
+                elements.manualDietCheckbox.checked;
+            
+            const isHolidayDay = isHoliday(recordTime);
+            const dayOfWeek = recordTime.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            
+            try {
+                if (type === 'entry') {
+                    if (isAutomatic && state.activeEntry) {
+                        showToast("Ya hay una entrada registrada. Registre salida primero.", "error");
+                        return;
+                    }
+                    
+                    if (isManual) {
+                        const today = new Date();
+                        const isToday = recordTime.toDateString() === today.toDateString();
+                        
+                        if (isToday && state.activeEntry) {
+                            showToast("Ya tiene una entrada registrada para hoy. Debe fichar salida primero.", "error");
+                            return;
+                        }
+                        
+                        let holidayInfo = '';
+                        if (isHolidayDay) holidayInfo = '\n\n⚠️ ATENCIÓN: Este día está marcado como FESTIVO.';
+                        else if (isWeekend) holidayInfo = '\n\nℹ️ INFORMACIÓN: Este día es FIN DE SEMANA.';
+                        
+                        const confirmed = await showConfirmationModal(
+                            'Registrar Entrada Manual',
+                            `¿Registrar ENTRADA MANUAL para ${state.currentEmployee.name} el ${formatDate(recordTime)} a las ${formatTimeWithSeconds(recordTime)}?${holidayInfo}`,
+                            'fas fa-sign-in-alt',
+                            'entry'
+                        );
+                        
+                        if (!confirmed) {
+                            showToast("Entrada manual cancelada", "info");
+                            return;
+                        }
+                    }
+                    
+                    const record = {
+                        employeeId: state.currentEmployee.id,
+                        employeeName: state.currentEmployee.name,
+                        type: 'entry',
+                        timestamp: recordTime,
+                        date: recordTime.toISOString().split('T')[0],
+                        year: recordTime.getFullYear(),
+                        month: recordTime.getMonth() + 1,
+                        day: recordTime.getDate(),
+                        hour: recordTime.getHours(),
+                        minute: recordTime.getMinutes(),
+                        second: recordTime.getSeconds(),
+                        timeFormatted: formatTimeWithSeconds(recordTime),
+                        isManual: isManual,
+                        isHoliday: isHolidayDay,
+                        isWeekend: isWeekend,
+                        // Añadir campo de dieta si está marcado
+                        hasDiet: hasDiet,
+                        dietAmount: hasDiet ? 1 : 0
+                    };
+                    
+                    const recordRef = await db.collection('records').add(record);
+                    
+                    const today = new Date();
+                    const isToday = recordTime.toDateString() === today.toDateString();
+                    
+                    if (isAutomatic && isToday) {
+                        const activeEntry = {
+                            entryTime: recordTime,
+                            entryRecordId: recordRef.id,
+                            lastAction: 'entry',
+                            lastActionTime: recordTime
+                        };
+                        
+                        await db.collection('employees').doc(state.currentEmployee.id).update({
+                            activeEntry: activeEntry,
+                            lastAction: 'entry',
+                            lastActionTime: recordTime
+                        });
+                        
+                        state.activeEntry = activeEntry;
+                        state.currentEmployee.activeEntry = activeEntry;
+                        
+                        const employeeIndex = state.employees.findIndex(emp => emp.id === state.currentEmployee.id);
+                        if (employeeIndex !== -1) {
+                            state.employees[employeeIndex].activeEntry = activeEntry;
+                        }
+                        
+                        if (state.elapsedInterval) {
+                            clearInterval(state.elapsedInterval);
+                        }
+                        state.elapsedInterval = setInterval(updateElapsedTime, 1000);
+                    }
+                    
+                    let holidayText = '';
+                    if (isHolidayDay) holidayText = ' (Festivo)';
+                    else if (isWeekend) holidayText = ' (Fin de semana)';
+                    
+                    let dietText = '';
+                    if (hasDiet) dietText = ' con dieta (+1€)';
+                    
+                    showToast(`Entrada ${isManual ? 'manual' : ''} registrada el ${formatDate(recordTime)} a las ${formatTimeWithSeconds(recordTime)}${dietText}${holidayText}`, "success");
+                    
+                } else if (type === 'exit') {
+                    let pairedEntry = null;
+                    let hoursWorked = 0;
+                    
+                    if (isManual) {
+                        const sameDay = recordTime.toISOString().split('T')[0];
+                        pairedEntry = await findEntryForDay(state.currentEmployee.id, sameDay, recordTime, true);
+                    }
+                    
+                    if (isAutomatic && !state.activeEntry) {
+                        showToast("No hay entrada activa para registrar salida", "error");
+                        return;
+                    }
+                    
+                    if (isManual) {
+                        let hoursInfo = '';
+                        let holidayInfo = '';
+                        
+                        if (isHolidayDay) holidayInfo = '\n\n⚠️ ATENCIÓN: Este día está marcado como FESTIVO.';
+                        else if (isWeekend) holidayInfo = '\n\nℹ️ INFORMACIÓN: Este día es FIN DE SEMANA.';
+                        
+                        if (pairedEntry) {
+                            hoursWorked = calculateWorkedHours(pairedEntry.time, recordTime);
+                            const entryType = pairedEntry.isManual ? "manual" : "automática";
+                            hoursInfo = `\n\n• Entrada ${entryType} encontrada: ${formatTimeWithSeconds(pairedEntry.time)}`;
+                            hoursInfo += `\n• Horas a calcular: ${formatHours(hoursWorked)}`;
+                        } else {
+                            hoursInfo = '\n\n• No se encontró entrada correspondiente para calcular horas.';
+                        }
+                        
+                        const confirmed = await showConfirmationModal(
+                            'Registrar Salida Manual',
+                            `¿Registrar SALIDA MANUAL para ${state.currentEmployee.name} el ${formatDate(recordTime)} a las ${formatTimeWithSeconds(recordTime)}?${holidayInfo}${hoursInfo}`,
+                            'fas fa-sign-out-alt',
+                            'exit'
+                        );
+                        
+                        if (!confirmed) {
+                            showToast("Salida manual cancelada", "info");
+                            return;
+                        }
+                    }
+                    
+                    const record = {
+                        employeeId: state.currentEmployee.id,
+                        employeeName: state.currentEmployee.name,
+                        type: 'exit',
+                        timestamp: recordTime,
+                        date: recordTime.toISOString().split('T')[0],
+                        year: recordTime.getFullYear(),
+                        month: recordTime.getMonth() + 1,
+                        day: recordTime.getDate(),
+                        hour: recordTime.getHours(),
+                        minute: recordTime.getMinutes(),
+                        second: recordTime.getSeconds(),
+                        timeFormatted: formatTimeWithSeconds(recordTime),
+                        isManual: isManual,
+                        isHoliday: isHolidayDay,
+                        isWeekend: isWeekend,
+                        // Añadir campo de dieta si está marcado
+                        hasDiet: hasDiet,
+                        dietAmount: hasDiet ? 1 : 0
+                    };
+                    
+                    if (isAutomatic && state.activeEntry) {
+                        hoursWorked = calculateWorkedHours(state.activeEntry.entryTime, recordTime);
+                        record.hoursWorked = hoursWorked;
+                        record.hoursWorkedFormatted = formatHours(hoursWorked);
+                        
+                        await db.collection('employees').doc(state.currentEmployee.id).update({
+                            activeEntry: null,
+                            lastAction: 'exit',
+                            lastActionTime: recordTime
+                        });
+                        
+                        state.activeEntry = null;
+                        state.currentEmployee.activeEntry = null;
+                        
+                        const employeeIndex = state.employees.findIndex(emp => emp.id === state.currentEmployee.id);
+                        if (employeeIndex !== -1) {
+                            state.employees[employeeIndex].activeEntry = null;
+                        }
+                        
+                        if (state.elapsedInterval) {
+                            clearInterval(state.elapsedInterval);
+                            state.elapsedInterval = null;
+                        }
+                        
+                    } else if (isManual && pairedEntry) {
+                        hoursWorked = calculateWorkedHours(pairedEntry.time, recordTime);
+                        record.hoursWorked = hoursWorked;
+                        record.hoursWorkedFormatted = formatHours(hoursWorked);
+                        record.entryRecordId = pairedEntry.id;
+                        record.hasPairedEntry = true;
+                        record.pairedEntryTime = formatTimeWithSeconds(pairedEntry.time);
+                        record.pairedEntryIsManual = pairedEntry.isManual;
+                    }
+                    
+                    await db.collection('records').add(record);
+                    
+                    let hoursText = '';
+                    if (record.hoursWorkedFormatted) {
+                        hoursText = `Horas trabajadas: ${record.hoursWorkedFormatted}`;
+                        if (record.hasPairedEntry) {
+                            const entryType = record.pairedEntryIsManual ? "entrada manual" : "entrada";
+                            hoursText += ` (desde ${entryType} ${record.pairedEntryTime})`;
+                        }
+                        hoursText = `. ${hoursText}`;
+                    }
+                    
+                    let holidayText = '';
+                    if (isHolidayDay) holidayText = ' (Festivo)';
+                    else if (isWeekend) holidayText = ' (Fin de semana)';
+                    
+                    let dietText = '';
+                    if (hasDiet) dietText = ' con dieta (+1€)';
+                    
+                    showToast(`Salida ${isManual ? 'manual' : ''} registrada el ${formatDate(recordTime)} a las ${formatTimeWithSeconds(recordTime)}${dietText}${holidayText}${hoursText}`, "success");
+                }
+                
+                // Desmarcar casilla de dieta después del registro
+                if (isAutomatic) {
+                    elements.autoDietCheckbox.checked = false;
+                } else {
+                    elements.manualDietCheckbox.checked = false;
+                }
+                
+                updateEmployeeUI();
+                await loadEmployeeStatistics(state.currentEmployee.id);
+                
+            } catch (error) {
+                console.error("Error registrando tiempo:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Cargar estadísticas del empleado
+        async function loadEmployeeStatistics(employeeId) {
+            try {
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                const currentMonth = today.getMonth() + 1;
+                const currentYear = today.getFullYear();
+                
+                const snapshot = await db.collection('records')
+                    .where('employeeId', '==', employeeId)
+                    .where('year', '==', currentYear)
+                    .where('month', '==', currentMonth)
+                    .get();
+                
+                let totalHoursToday = 0;
+                let totalHoursMonth = 0;
+                let daysWorkedSet = new Set();
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const record = {
+                        ...data,
+                        timestamp: convertTimestampToDate(data.timestamp)
+                    };
+                    
+                    if (record.date === todayString) {
+                        if (record.type === 'exit' && record.hoursWorked) {
+                            totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                        } else if (record.type === 'travel' && record.hoursWorked) {
+                            totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                        }
+                    }
+                    
+                    if (record.type === 'exit' && record.hoursWorked) {
+                        totalHoursMonth += parseFloat(record.hoursWorked) || 0;
+                    } else if (record.type === 'travel' && record.hoursWorked) {
+                        totalHoursMonth += parseFloat(record.hoursWorked) || 0;
+                    }
+                    
+                    if (record.type === 'entry' || record.type === 'exit') {
+                        daysWorkedSet.add(record.date);
+                    }
+                });
+                
+                const daysWorkedCount = daysWorkedSet.size;
+                elements.hoursToday.textContent = formatHours(totalHoursToday);
+                elements.hoursMonth.textContent = formatHours(totalHoursMonth);
+                elements.daysWorked.textContent = daysWorkedCount.toString();
+                
+            } catch (error) {
+                console.error("Error cargando estadísticas:", error);
+                elements.hoursToday.textContent = "00:00:00";
+                elements.hoursMonth.textContent = "00:00:00";
+                elements.daysWorked.textContent = "0";
+            }
+        }
+
+        // Login administrador
+        function adminLogin() {
+            const username = elements.adminUser.value.trim();
+            const password = elements.adminPassword.value.trim();
+            
+            if (username === "IRISNOR" && password === "IRISNOR2026@") {
+                state.isAdmin = true;
+                elements.adminLogin.style.display = 'none';
+                elements.adminPanel.style.display = 'block';
+                showToast("Acceso administrador concedido", "success");
+                
+                loadEmployees();
+                loadHolidays();
+                loadAdminStatistics();
+                filterRecords();
+            } else {
+                showToast("Usuario o contraseña incorrectos", "error");
+            }
+        }
+
+        // Logout administrador
+        function adminLogout() {
+            state.isAdmin = false;
+            elements.adminPanel.style.display = 'none';
+            elements.adminLogin.style.display = 'block';
+            elements.adminUser.value = '';
+            elements.adminPassword.value = '';
+            showToast("Sesión cerrada", "info");
+        }
+
+        // Cargar estadísticas globales para admin
+        async function loadAdminStatistics() {
+            try {
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                const currentMonth = today.getMonth() + 1;
+                const currentYear = today.getFullYear();
+                
+                const snapshot = await db.collection('records')
+                    .where('year', '==', currentYear)
+                    .where('month', '==', currentMonth)
+                    .get();
+                
+                let totalHoursToday = 0;
+                let totalHoursMonth = 0;
+                let usedVacationDays = 0;
+                let travelDays = 0;
+                let travelHours = 0;
+                let sickDays = 0;
+                let daysWorkedSet = new Set();
+                let normalHoursMonth = 0;
+                let extraHoursMonth = 0;
+                let weekendExtraHoursMonth = 0;
+                let totalDiets = 0;
+                let totalDietValue = 0;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const record = {
+                        ...data,
+                        timestamp: convertTimestampToDate(data.timestamp)
+                    };
+                    
+                    if (record.date === todayString) {
+                        if (record.type === 'exit' && record.hoursWorked) {
+                            totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                        } else if (record.type === 'travel' && record.hoursWorked) {
+                            totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                        }
+                    }
+                    
+                    if (record.type === 'exit' && record.hoursWorked) {
+                        const hours = parseFloat(record.hoursWorked) || 0;
+                        const classification = classifyHours(hours, record.timestamp, record.type);
+                        
+                        totalHoursMonth += hours;
+                        normalHoursMonth += classification.normal;
+                        extraHoursMonth += classification.extra;
+                        weekendExtraHoursMonth += classification.weekendExtra;
+                    } else if (record.type === 'travel' && record.hoursWorked) {
+                        const hours = parseFloat(record.hoursWorked) || 0;
+                        const classification = classifyHours(hours, record.timestamp, record.type);
+                        
+                        totalHoursMonth += hours;
+                        travelHours += hours;
+                        travelDays++;
+                        normalHoursMonth += classification.normal;
+                    }
+                    
+                    if (record.type === 'vacation') {
+                        usedVacationDays++;
+                    } else if (record.type === 'sick') {
+                        sickDays++;
+                    }
+                    
+                    // Contar dietas
+                    if (record.hasDiet) {
+                        totalDiets++;
+                        totalDietValue += record.dietAmount || 1;
+                    }
+                    
+                    if (record.type === 'entry' || record.type === 'exit') {
+                        daysWorkedSet.add(record.date + '_' + record.employeeId);
+                    }
+                });
+                
+                elements.totalHoursToday.textContent = formatHours(totalHoursToday);
+                elements.totalHoursMonth.textContent = formatHours(totalHoursMonth);
+                elements.usedVacation.textContent = `${usedVacationDays}d`;
+                elements.travelDays.textContent = travelDays.toString();
+                elements.travelHours.textContent = formatHours(travelHours);
+                elements.sickDays.textContent = sickDays.toString();
+                elements.totalDaysWorked.textContent = daysWorkedSet.size.toString();
+                
+                // Actualizar las nuevas estadísticas
+                elements.normalHours.textContent = formatHours(normalHoursMonth);
+                elements.extraHours.textContent = formatHours(extraHoursMonth);
+                elements.weekendExtraHours.textContent = formatHours(weekendExtraHoursMonth);
+                
+                // Actualizar estadísticas de dietas
+                elements.totalDiets.textContent = totalDiets.toString();
+                elements.totalDietValue.textContent = totalDietValue.toFixed(2) + '€';
+                
+            } catch (error) {
+                console.error("Error cargando estadísticas admin:", error);
+                elements.totalHoursToday.textContent = "00:00:00";
+                elements.totalHoursMonth.textContent = "00:00:00";
+                elements.usedVacation.textContent = "0d";
+                elements.travelDays.textContent = "0";
+                elements.travelHours.textContent = "00:00:00";
+                elements.sickDays.textContent = "0";
+                elements.totalDaysWorked.textContent = "0";
+                elements.normalHours.textContent = "00:00:00";
+                elements.extraHours.textContent = "00:00:00";
+                elements.weekendExtraHours.textContent = "00:00:00";
+                elements.totalDiets.textContent = "0";
+                elements.totalDietValue.textContent = "0€";
+            }
+        }
+
+        // Filtrar registros
+        async function filterRecords() {
+            try {
+                let query = db.collection('records').orderBy('timestamp', 'desc');
+                
+                const employeeId = elements.filterEmployee.value;
+                const year = elements.filterYear.value;
+                const month = elements.filterMonth.value;
+                const startDate = elements.filterStart.value;
+                const endDate = elements.filterEnd.value;
+                
+                const selectedTypes = [];
+                if (elements.filterEntry.checked) selectedTypes.push('entry');
+                if (elements.filterExit.checked) selectedTypes.push('exit');
+                if (elements.filterVacation.checked) selectedTypes.push('vacation');
+                if (elements.filterSick.checked) selectedTypes.push('sick');
+                if (elements.filterTravel.checked) selectedTypes.push('travel');
+                if (elements.filterDiet.checked) selectedTypes.push('diet');
+                
+                const snapshot = await query.get();
+                let filteredRecords = [];
+                let filteredStats = {
+                    totalHoursToday: 0,
+                    totalHoursMonth: 0,
+                    usedVacationDays: 0,
+                    travelDays: 0,
+                    travelHours: 0,
+                    sickDays: 0,
+                    daysWorkedSet: new Set(),
+                    normalHoursMonth: 0,
+                    extraHoursMonth: 0,
+                    weekendExtraHoursMonth: 0,
+                    totalDiets: 0,
+                    totalDietValue: 0
+                };
+                
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                const currentMonth = today.getMonth() + 1;
+                const currentYear = today.getFullYear();
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const record = {
+                        id: doc.id,
+                        ...data,
+                        timestamp: convertTimestampToDate(data.timestamp)
+                    };
+                    
+                    let include = true;
+                    
+                    if (employeeId && record.employeeId !== employeeId) {
+                        include = false;
+                    }
+                    
+                    if (year && record.year !== parseInt(year)) {
+                        include = false;
+                    }
+                    
+                    if (month && record.month !== parseInt(month)) {
+                        include = false;
+                    }
+                    
+                    if (startDate && record.date < startDate) {
+                        include = false;
+                    }
+                    
+                    if (endDate && record.date > endDate) {
+                        include = false;
+                    }
+                    
+                    if (selectedTypes.length > 0 && !selectedTypes.includes(record.type)) {
+                        include = false;
+                    }
+                    
+                    if (include) {
+                        filteredRecords.push(record);
+                        
+                        if (record.date === todayString) {
+                            if (record.type === 'exit' && record.hoursWorked) {
+                                filteredStats.totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                            } else if (record.type === 'travel' && record.hoursWorked) {
+                                filteredStats.totalHoursToday += parseFloat(record.hoursWorked) || 0;
+                            }
+                        }
+                        
+                        if ((!year || record.year === parseInt(year)) && 
+                            (!month || record.month === parseInt(month))) {
+                            if (record.type === 'exit' && record.hoursWorked) {
+                                const hours = parseFloat(record.hoursWorked) || 0;
+                                const classification = classifyHours(hours, record.timestamp, record.type);
+                                
+                                filteredStats.totalHoursMonth += hours;
+                                filteredStats.normalHoursMonth += classification.normal;
+                                filteredStats.extraHoursMonth += classification.extra;
+                                filteredStats.weekendExtraHoursMonth += classification.weekendExtra;
+                            } else if (record.type === 'travel' && record.hoursWorked) {
+                                const hours = parseFloat(record.hoursWorked) || 0;
+                                const classification = classifyHours(hours, record.timestamp, record.type);
+                                
+                                filteredStats.totalHoursMonth += hours;
+                                filteredStats.travelHours += hours;
+                                filteredStats.travelDays++;
+                                filteredStats.normalHoursMonth += classification.normal;
+                            }
+                        }
+                        
+                        if (record.type === 'vacation') {
+                            filteredStats.usedVacationDays++;
+                        } else if (record.type === 'sick') {
+                            filteredStats.sickDays++;
+                        }
+                        
+                        // Contar dietas
+                        if (record.hasDiet) {
+                            filteredStats.totalDiets++;
+                            filteredStats.totalDietValue += record.dietAmount || 1;
+                        }
+                        
+                        if (record.type === 'entry' || record.type === 'exit') {
+                            filteredStats.daysWorkedSet.add(record.date + '_' + record.employeeId);
+                        }
+                    }
+                });
+                
+                updateAdminRecordsDisplay(filteredRecords);
+                
+                elements.totalHoursToday.textContent = formatHours(filteredStats.totalHoursToday);
+                elements.totalHoursMonth.textContent = formatHours(filteredStats.totalHoursMonth);
+                elements.usedVacation.textContent = `${filteredStats.usedVacationDays}d`;
+                elements.travelDays.textContent = filteredStats.travelDays.toString();
+                elements.travelHours.textContent = formatHours(filteredStats.travelHours);
+                elements.sickDays.textContent = filteredStats.sickDays.toString();
+                elements.totalDaysWorked.textContent = filteredStats.daysWorkedSet.size.toString();
+                
+                // Actualizar las nuevas estadísticas
+                elements.normalHours.textContent = formatHours(filteredStats.normalHoursMonth);
+                elements.extraHours.textContent = formatHours(filteredStats.extraHoursMonth);
+                elements.weekendExtraHours.textContent = formatHours(filteredStats.weekendExtraHoursMonth);
+                
+                // Actualizar estadísticas de dietas
+                elements.totalDiets.textContent = filteredStats.totalDiets.toString();
+                elements.totalDietValue.textContent = filteredStats.totalDietValue.toFixed(2) + '€';
+                
+                showToast(`${filteredRecords.length} registros encontrados`, "success");
+                
+            } catch (error) {
+                console.error("Error filtrando registros:", error);
+                showToast(`Error: ${error.message}`, "error");
+            }
+        }
+
+        // Actualizar visualización de registros en admin
+        function updateAdminRecordsDisplay(records) {
+            elements.adminRecords.innerHTML = '';
+            
+            if (records.length === 0) {
+                elements.adminRecords.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>No hay registros con los filtros aplicados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'records-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Empleado</th>
+                        <th>Tipo</th>
+                        <th>Horas</th>
+                        <th>Dieta</th>
+                        <th>Notas</th>
+                    </tr>
+                </thead>
+                <tbody id="records-table-body">
+                </tbody>
+            `;
+            
+            elements.adminRecords.appendChild(table);
+            const tbody = document.getElementById('records-table-body');
+            
+            records.forEach(record => {
+                const recordTime = record.timestamp;
+                const timeString = record.timeFormatted || formatTimeWithSeconds(recordTime);
+                const dateString = formatDate(recordTime);
+                
+                let typeText = '', typeClass = '';
+                switch(record.type) {
+                    case 'entry':
+                        typeText = record.isManual ? 'Entrada Manual' : 'Entrada';
+                        typeClass = 'entry';
+                        break;
+                    case 'exit':
+                        typeText = record.isManual ? 'Salida Manual' : 'Salida';
+                        typeClass = 'exit';
+                        break;
+                    case 'vacation':
+                        typeText = 'Vacaciones';
+                        typeClass = 'vacation';
+                        break;
+                    case 'sick':
+                        typeText = 'Baja Laboral';
+                        typeClass = 'sick';
+                        break;
+                    case 'travel':
+                        typeText = 'Viaje';
+                        typeClass = 'travel';
+                        break;
+                    case 'diet':
+                        typeText = 'Dieta';
+                        typeClass = 'diet';
+                        break;
+                }
+                
+                let classificationNote = '';
+                let specialDayNote = '';
+                
+                if (record.isHoliday) {
+                    specialDayNote = '<span style="color: var(--holiday); font-weight: bold;">🎉 FESTIVO</span>';
+                } else if (record.isWeekend) {
+                    specialDayNote = '<span style="color: var(--weekend-extra);">📅 Fin de semana</span>';
+                }
+                
+                if (record.hoursWorked && (record.type === 'exit' || record.type === 'travel')) {
+                    const classification = classifyHours(parseFloat(record.hoursWorked), recordTime, record.type);
+                    const parts = [];
+                    if (classification.normal > 0) parts.push(`Normal: ${formatHours(classification.normal)}`);
+                    if (classification.extra > 0) parts.push(`Extra: ${formatHours(classification.extra)}`);
+                    if (classification.weekendExtra > 0) parts.push(`FinSem: ${formatHours(classification.weekendExtra)}`);
+                    
+                    if (parts.length > 0) {
+                        classificationNote = `<div style="font-size: 0.8rem; color: var(--info); margin-top: 3px;">${parts.join(' | ')}</div>`;
+                    }
+                }
+                
+                // Mostrar información de dieta
+                let dietText = '';
+                if (record.hasDiet) {
+                    dietText = `<span class="record-type diet" style="display: inline-block; margin: 2px;">
+                        <i class="fas fa-utensils"></i> ${record.dietAmount || 1}€
+                    </span>`;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${dateString}</td>
+                    <td><strong>${timeString}</strong></td>
+                    <td>${record.employeeName}</td>
+                    <td><span class="record-type ${typeClass}">${typeText}</span></td>
+                    <td>
+                        ${record.hoursWorkedFormatted ? 
+                            `<div>
+                                <strong>${record.hoursWorkedFormatted}</strong>
+                                ${record.hasPairedEntry ? 
+                                    `<div style="font-size: 0.8rem; color: var(--info);">
+                                        <i class="fas fa-link"></i> Desde: ${record.pairedEntryTime}
+                                        ${record.pairedEntryIsManual ? '(Manual)' : ''}
+                                    </div>` : ''
+                                }
+                                ${classificationNote}
+                            </div>` : 
+                            record.hoursWorked ? 
+                                `<div>
+                                    <strong>${formatHours(parseFloat(record.hoursWorked))}</strong>
+                                    ${classificationNote}
+                                </div>` : 
+                                '-'
+                        }
+                    </td>
+                    <td>${dietText}</td>
+                    <td>
+                        ${specialDayNote ? `<div style="margin-bottom: 5px;">${specialDayNote}</div>` : ''}
+                        ${record.extraVacation ? 
+                            `<span style="color: var(--warning);">+${record.extraVacation} día vac.</span>` : 
+                            record.isManual ? 
+                                `<span style="color: var(--info); font-size: 0.8rem;">
+                                    <i class="fas fa-user-edit"></i> Manual
+                                    ${record.hasPairedEntry ? '<i class="fas fa-link" style="margin-left: 5px;"></i>' : ''}
+                                </span>` : 
+                                ''
+                        }
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            elements.adminRecordsContainer.style.maxHeight = '500px';
+            elements.adminRecordsContainer.style.overflowY = 'auto';
+        }
+
+        // Exportar registros
+        function exportRecords() {
+            try {
+                const table = document.querySelector('#admin-records table');
+                if (!table) {
+                    showToast("No hay registros para exportar", "warning");
+                    return;
+                }
+                
+                const rows = table.querySelectorAll('tr');
+                if (rows.length <= 1) {
+                    showToast("No hay registros para exportar", "warning");
+                    return;
+                }
+                
+                let csvContent = "data:text/csv;charset=utf-8,";
+                const headers = ['Fecha', 'Hora', 'Empleado', 'Tipo', 'Horas', 'Dieta', 'Notas'];
+                csvContent += headers.join(",") + "\r\n";
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].querySelectorAll('td');
+                    const row = [
+                        cells[0].textContent.trim(),
+                        cells[1].textContent.trim(),
+                        `"${cells[2].textContent.trim()}"`,
+                        cells[3].textContent.trim(),
+                        cells[4].querySelector('strong')?.textContent.trim() || '-',
+                        cells[5].textContent.trim(),
+                        cells[6].textContent.trim()
+                    ];
+                    csvContent += row.join(",") + "\r\n";
+                }
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `registros_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast("Registros exportados correctamente", "success");
+            } catch (error) {
+                console.error("Error exportando registros:", error);
+                showToast("Error exportando registros", "error");
+            }
+        }
+
+        // Mostrar toast con duración personalizable
+        function showToast(message, type = "success", duration = 3000) {
+            elements.toast.textContent = message;
+            elements.toast.className = "toast";
+            elements.toast.classList.add(type);
+            elements.toast.classList.add("active");
+            
+            let icon = '';
+            switch(type) {
+                case 'success': icon = '<i class="fas fa-check-circle"></i>'; break;
+                case 'error': icon = '<i class="fas fa-exclamation-circle"></i>'; break;
+                case 'warning': icon = '<i class="fas fa-exclamation-triangle"></i>'; break;
+                case 'info': icon = '<i class="fas fa-info-circle"></i>'; break;
+            }
+            elements.toast.innerHTML = icon + message;
+            
+            setTimeout(() => {
+                elements.toast.classList.remove("active");
+            }, duration);
+        }
+
+        // Mostrar loading
+        function showLoading(message = "Cargando...") {
+            elements.loadingText.textContent = message;
+            elements.loading.classList.add('active');
+        }
+
+        // Ocultar loading
+        function hideLoading() {
+            elements.loading.classList.remove('active');
+        }
+
+        // Cargar datos de demostración
+        function loadDemoData() {
+            showToast("Modo demostración activado", "info");
+            
+            state.employees = [
+                { 
+                    id: 'EMP001', 
+                    name: 'Juan Pérez García', 
+                    department: 'Producción', 
+                    vacationDays: {2026: 18},
+                    vacationNotes: {2026: "22 días asignados. Se compensaron 4 días consumidos de más en 2025."},
+                    activeEntry: null 
+                },
+                { 
+                    id: 'EMP002', 
+                    name: 'María Gómez López', 
+                    department: 'Calidad', 
+                    vacationDays: {2026: 22},
+                    vacationNotes: {2026: "22 días asignados. Balance exacto del año anterior (sin días pendientes ni excesos)."},
+                    activeEntry: null 
+                },
+                { 
+                    id: 'EMP003', 
+                    name: 'Carlos Rodríguez Martínez', 
+                    department: 'Logística', 
+                    vacationDays: {2026: 15},
+                    vacationNotes: {2026: "22 días asignados. Se compensaron 7 días consumidos de más en 2025."},
+                    activeEntry: null 
+                }
+            ];
+            
+            state.holidays = [
+                { id: 'HOL001', date: '2026-01-01', year: 2026, description: 'Año Nuevo' },
+                { id: 'HOL002', date: '2026-01-06', year: 2026, description: 'Reyes' },
+                { id: 'HOL003', date: '2026-04-17', year: 2026, description: 'Viernes Santo' },
+                { id: 'HOL004', date: '2026-05-01', year: 2026, description: 'Día del Trabajo' },
+                { id: 'HOL005', date: '2026-12-25', year: 2026, description: 'Navidad' }
+            ];
+            
+            updateEmployeeSelects();
+            updateEmployeesList();
+            updateHolidaysList();
+            
+            state.currentEmployee = state.employees[0];
+            elements.employeeSelect.value = state.currentEmployee.id;
+            updateEmployeeUI();
+            
+            elements.hoursToday.textContent = "08:30:00";
+            elements.hoursMonth.textContent = "145:15:30";
+            elements.daysWorked.textContent = '18';
+            
+            // Datos demo para las nuevas estadísticas
+            elements.totalHoursToday.textContent = "24:45:00";
+            elements.totalHoursMonth.textContent = "435:45:30";
+            elements.usedVacation.textContent = "12d";
+            elements.travelDays.textContent = "5";
+            elements.travelHours.textContent = "40:00:00";
+            elements.sickDays.textContent = "3";
+            elements.totalDaysWorked.textContent = "54";
+            elements.totalEmployees.textContent = state.employees.length.toString();
+            elements.normalHours.textContent = "320:00:00";
+            elements.extraHours.textContent = "75:45:30";
+            elements.weekendExtraHours.textContent = "40:00:00";
+            // Datos demo para dietas
+            elements.totalDiets.textContent = "8";
+            elements.totalDietValue.textContent = "8€";
+        }
+
+        // Actualizar selects de empleados
+        function updateEmployeeSelects() {
+            elements.employeeSelect.innerHTML = '<option value="">Seleccione un operario</option>';
+            elements.vacationEmployee.innerHTML = '<option value="">Seleccione empleado</option>';
+            elements.filterEmployee.innerHTML = '<option value="">Todos los empleados</option>';
+            elements.editVacationEmployee.innerHTML = '<option value="">Seleccione empleado</option>';
+            
+            state.employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = employee.name;
+                elements.employeeSelect.appendChild(option);
+                
+                const option2 = option.cloneNode(true);
+                elements.vacationEmployee.appendChild(option2);
+                
+                const option3 = option.cloneNode(true);
+                elements.filterEmployee.appendChild(option3);
+
+                const option4 = option.cloneNode(true);
+                elements.editVacationEmployee.appendChild(option4);
+            });
+        }
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
